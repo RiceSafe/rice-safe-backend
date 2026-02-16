@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/RiceSafe/rice-safe-backend/internal/auth"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/database"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -28,6 +29,11 @@ func main() {
 	app.Use(logger.New())
 	app.Use(recover.New())
 	app.Use(cors.New())
+
+	// Initialize Auth Module
+	authRepo := auth.NewRepository()
+	authService := auth.NewService(authRepo)
+	auth.RegisterRoutes(app, authService)
 
 	// Health Check
 	app.Get("/health", func(c *fiber.Ctx) error {
