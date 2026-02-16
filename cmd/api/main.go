@@ -20,6 +20,9 @@ import (
 // @description Backend API for RiceSafe Mobile Application
 // @host localhost:8080
 // @BasePath /api
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	// Load .env
 	if err := godotenv.Load(); err != nil {

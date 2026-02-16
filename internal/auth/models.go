@@ -32,6 +32,23 @@ type LoginRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
+// ChangePasswordRequest is the payload for changing password
+type ChangePasswordRequest struct {
+	OldPassword string `json:"old_password" validate:"required"`
+	NewPassword string `json:"new_password" validate:"required,min=6"`
+}
+
+// ForgotPasswordRequest is the payload for requesting a reset
+type ForgotPasswordRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+// ResetPasswordRequest is the payload for reseting password
+type ResetPasswordRequest struct {
+	Token       string `json:"token" validate:"required"`
+	NewPassword string `json:"new_password" validate:"required,min=6"`
+}
+
 // AuthResponse is returned after successful auth
 type AuthResponse struct {
 	Token string `json:"token"`
