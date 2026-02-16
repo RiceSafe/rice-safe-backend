@@ -2,16 +2,15 @@ package main
 
 import (
 	"log"
-	"os"
 
 	_ "github.com/RiceSafe/rice-safe-backend/docs"
 	"github.com/RiceSafe/rice-safe-backend/internal/auth"
+	"github.com/RiceSafe/rice-safe-backend/internal/config"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/database"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/joho/godotenv"
 	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
@@ -24,13 +23,14 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	// Load .env
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+	// Load Config
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
 	}
 
 	// Connect to Database
-	database.ConnectDB()
+	database.ConnectDB(cfg.DBSource)
 	defer database.CloseDB()
 
 	app := fiber.New()
@@ -42,7 +42,7 @@ func main() {
 
 	// Initialize Auth Module
 	authRepo := auth.NewRepository()
-	authService := auth.NewService(authRepo)
+	authService := auth.NewService(authRepo, cfg.JWTSecret)
 	auth.RegisterRoutes(app, authService)
 
 	// Health Check
@@ -57,11 +57,6 @@ func main() {
 	// Swagger
 	app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	log.Printf("Server starting on port %s", port)
-	log.Fatal(app.Listen(":" + port))
+	log.Printf("Server starting on port %s", cfg.Port)
+	log.Fatal(app.Listen(":" + cfg.Port))
 }

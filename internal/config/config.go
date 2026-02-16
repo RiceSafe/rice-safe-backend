@@ -1,0 +1,43 @@
+package config
+
+import (
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+)
+
+type Config struct {
+	Port      string
+	DBSource  string
+	JWTSecret string
+}
+
+func LoadConfig() (*Config, error) {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, relying on system environment variables")
+	}
+
+	config := &Config{
+		Port:      getEnv("PORT", "8080"),
+		DBSource:  getEnv("DB_SOURCE", ""),
+		JWTSecret: getEnv("JWT_SECRET", ""),
+	}
+
+	// Validate required variables
+	if config.DBSource == "" {
+		log.Fatal("DB_SOURCE environment variable is not set")
+	}
+	if config.JWTSecret == "" {
+		log.Fatal("JWT_SECRET environment variable is not set")
+	}
+
+	return config, nil
+}
+
+func getEnv(key, fallback string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return fallback
+}

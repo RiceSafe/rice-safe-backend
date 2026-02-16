@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -22,11 +21,12 @@ type Service interface {
 }
 
 type service struct {
-	repo Repository
+	repo      Repository
+	jwtSecret string
 }
 
-func NewService(repo Repository) Service {
-	return &service{repo: repo}
+func NewService(repo Repository, jwtSecret string) Service {
+	return &service{repo: repo, jwtSecret: jwtSecret}
 }
 
 func (s *service) Register(ctx context.Context, req RegisterRequest) (*AuthResponse, error) {
@@ -46,7 +46,7 @@ func (s *service) Register(ctx context.Context, req RegisterRequest) (*AuthRespo
 		return nil, err
 	}
 
-	token, err := generateToken(user)
+	token, err := s.generateToken(user)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (s *service) Login(ctx context.Context, req LoginRequest) (*AuthResponse, e
 		return nil, errors.New("invalid email or password")
 	}
 
-	token, err := generateToken(user)
+	token, err := s.generateToken(user)
 	if err != nil {
 		return nil, err
 	}
@@ -154,9 +154,8 @@ func checkPassword(password, hash string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }
 
-func generateToken(user *User) (string, error) {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
+func (s *service) generateToken(user *User) (string, error) {
+	if s.jwtSecret == "" {
 		return "", errors.New("JWT_SECRET is not set")
 	}
 
@@ -167,5 +166,5 @@ func generateToken(user *User) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secret))
+	return token.SignedString([]byte(s.jwtSecret))
 }

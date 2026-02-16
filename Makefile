@@ -1,5 +1,8 @@
-DB_URL=postgresql://postgres:postgres@localhost:5432/ricesafe?sslmode=disable
-DB_URL_DOCKER=postgresql://postgres:postgres@db:5432/ricesafe?sslmode=disable
+include .env
+export
+
+DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}?sslmode=disable
+DB_URL_DOCKER=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
 NETWORK=rice-safe-backend_rice-safe-net
 
 docker-up:

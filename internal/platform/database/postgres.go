@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"log"
-	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -11,13 +10,12 @@ import (
 
 var DB *pgxpool.Pool
 
-func ConnectDB() {
-	dbURL := os.Getenv("DB_SOURCE")
-	if dbURL == "" {
+func ConnectDB(dataSource string) {
+	if dataSource == "" {
 		log.Fatal("DB_SOURCE environment variable is not set")
 	}
 
-	config, err := pgxpool.ParseConfig(dbURL)
+	config, err := pgxpool.ParseConfig(dataSource)
 	if err != nil {
 		log.Fatalf("Unable to parse DB URL: %v", err)
 	}
