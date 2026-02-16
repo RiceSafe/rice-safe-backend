@@ -6,9 +6,9 @@ services:
     container_name: ricesafe_db
     restart: always
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=ricesafe
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -23,10 +23,11 @@ services:
     container_name: ricesafe_backend
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "${PORT}:${PORT}"
     environment:
-      - DB_SOURCE=postgresql://postgres:postgres@db:5432/ricesafe?sslmode=disable
-      - PORT=8080
+      - DB_SOURCE=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+      - PORT=${PORT}
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./:/app
     depends_on:
