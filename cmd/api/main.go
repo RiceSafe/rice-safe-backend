@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	_ "github.com/RiceSafe/rice-safe-backend/docs"
 	"github.com/RiceSafe/rice-safe-backend/internal/auth"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/database"
 	"github.com/gofiber/fiber/v2"
@@ -11,8 +12,14 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
+// @title RiceSafe Backend API
+// @version 1.0
+// @description Backend API for RiceSafe Mobile Application
+// @host localhost:8080
+// @BasePath /api
 func main() {
 	// Load .env
 	if err := godotenv.Load(); err != nil {
@@ -43,6 +50,9 @@ func main() {
 			"db":      "connected",
 		})
 	})
+
+	// Swagger
+	app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
