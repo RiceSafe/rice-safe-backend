@@ -6,6 +6,7 @@ import (
 	_ "github.com/RiceSafe/rice-safe-backend/docs"
 	"github.com/RiceSafe/rice-safe-backend/internal/auth"
 	"github.com/RiceSafe/rice-safe-backend/internal/config"
+	"github.com/RiceSafe/rice-safe-backend/internal/disease"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/database"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/storage"
 	"github.com/gofiber/fiber/v2"
@@ -51,6 +52,11 @@ func main() {
 	authRepo := auth.NewRepository()
 	authService := auth.NewService(authRepo, cfg.JWTSecret, storageService)
 	auth.RegisterRoutes(app, authService)
+
+	// Initialize Disease Module
+	diseaseRepo := disease.NewRepository()
+	diseaseService := disease.NewService(diseaseRepo, storageService)
+	disease.RegisterRoutes(app, diseaseService)
 
 	// Upload Endpoint (Utility)
 	storageHandler := storage.NewHandler(storageService)
