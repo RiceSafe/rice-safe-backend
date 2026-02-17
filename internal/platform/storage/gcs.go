@@ -54,6 +54,22 @@ func (s *GCSService) UploadFile(file *multipart.FileHeader, folder string) (stri
 	return filename, nil
 }
 
+func (s *GCSService) UploadBytes(data []byte, filename string, folder string) (string, error) {
+	ctx := context.Background()
+	// Generate unique filename: folder/timestamp-filename
+	objectName := fmt.Sprintf("%s/%d-%s", folder, time.Now().Unix(), filename)
+
+	wc := s.client.Bucket(s.bucketName).Object(objectName).NewWriter(ctx)
+	if _, err := wc.Write(data); err != nil {
+		return "", fmt.Errorf("wc.Write: %v", err)
+	}
+	if err := wc.Close(); err != nil {
+		return "", fmt.Errorf("Writer.Close: %v", err)
+	}
+
+	return objectName, nil
+}
+
 func (s *GCSService) GetFileUrl(filename string) (string, error) {
 	if filename == "" {
 		return "", nil

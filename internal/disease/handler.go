@@ -18,21 +18,39 @@ func RegisterRoutes(app *fiber.App, service Service) {
 	group := app.Group("/api/diseases")
 
 	group.Get("/", h.GetDiseases)
+	group.Get("/categories", h.GetCategories)
 	group.Get("/:id", h.GetDiseaseByID)
 	group.Post("/", h.CreateDisease)
 	group.Put("/:id", h.UpdateDisease)
+}
+
+// GetCategories godoc
+// @Summary      List disease categories
+// @Description  Get unique list of disease categories for key filtering
+// @Tags         diseases
+// @Produce      json
+// @Success      200  {array}   string
+// @Failure      500  {object}  map[string]string
+// @Router       /diseases/categories [get]
+func (h *Handler) GetCategories(c *fiber.Ctx) error {
+	categories, err := h.service.GetCategories(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(categories)
 }
 
 // GetDiseases godoc
 // @Summary      List all diseases
 // @Description  Get a list of all diseases in the library
 // @Tags         diseases
-// @Produce      json
+// @Param        category query     string  false "Filter by category"
 // @Success      200  {array}   Disease
 // @Failure      500  {object}  map[string]string
 // @Router       /diseases [get]
 func (h *Handler) GetDiseases(c *fiber.Ctx) error {
-	diseases, err := h.service.GetDiseases(c.Context())
+	category := c.Query("category")
+	diseases, err := h.service.GetDiseases(c.Context(), category)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

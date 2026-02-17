@@ -3,6 +3,50 @@ definitions:
   fiber.Map:
     additionalProperties: true
     type: object
+  github_com_RiceSafe_rice-safe-backend_internal_disease.Disease:
+    properties:
+      alias:
+        type: string
+      category:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      match_weather:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      prevention:
+        items:
+          $ref: '#/definitions/github_com_RiceSafe_rice-safe-backend_internal_disease.InfoSection'
+        type: array
+      spread_details:
+        type: string
+      symptoms:
+        items:
+          $ref: '#/definitions/github_com_RiceSafe_rice-safe-backend_internal_disease.InfoSection'
+        type: array
+      treatment:
+        items:
+          $ref: '#/definitions/github_com_RiceSafe_rice-safe-backend_internal_disease.InfoSection'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  github_com_RiceSafe_rice-safe-backend_internal_disease.InfoSection:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+    type: object
   internal_auth.AuthResponse:
     properties:
       token:
@@ -87,10 +131,49 @@ definitions:
       username:
         type: string
     type: object
+  internal_diagnosis.DiagnosisResponse:
+    properties:
+      confidence:
+        description: Percentage (0-100)
+        type: number
+      created_at:
+        type: string
+      diagnosis_id:
+        type: string
+      disease_result:
+        allOf:
+        - $ref: '#/definitions/github_com_RiceSafe_rice-safe-backend_internal_disease.Disease'
+        description: Full details from Disease Library
+      image_url:
+        description: User uploaded image
+        type: string
+      info_message:
+        description: User-facing message for UI
+        type: string
+      prediction:
+        description: 'AI Result: normal, not_rice, not_clear, or disease_alias'
+        type: string
+    type: object
+  internal_diagnosis.HistoryResponse:
+    properties:
+      confidence:
+        type: number
+      created_at:
+        type: string
+      disease_name:
+        description: Thai Name or "Healthy"
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      prediction:
+        description: Disease Alias or "Normal"
+        type: string
+    type: object
   internal_disease.Disease:
     properties:
       alias:
-        description: Matches AI Classification
         type: string
       category:
         type: string
@@ -132,11 +215,36 @@ definitions:
       title:
         type: string
     type: object
+  internal_outbreak.OutbreakResponse:
+    properties:
+      created_at:
+        type: string
+      disease_id:
+        type: string
+      disease_name:
+        type: string
+      distance:
+        type: number
+      id:
+        type: string
+      image_url:
+        type: string
+      is_active:
+        type: boolean
+      is_verified:
+        type: boolean
+      latitude:
+        type: number
+      longitude:
+        type: number
+      updated_at:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
-  description: Backend API for RiceSafe Mobile Application
-  title: RiceSafe Backend API
+  description: Backend API for RiceSafe Application
+  title: RiceSafe API
   version: "1.0"
 paths:
   /auth/change-password:
@@ -333,11 +441,82 @@ paths:
       summary: Reset password
       tags:
       - auth
+  /diagnosis:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload an image to get a disease prediction and details.
+      parameters:
+      - description: Rice Leaf Image
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Symptoms Description
+        in: formData
+        name: description
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_diagnosis.DiagnosisResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Diagnose Disease from Image
+      tags:
+      - diagnosis
+  /diagnosis/history:
+    get:
+      description: Get a list of past diagnoses for the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_diagnosis.HistoryResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Diagnosis History
+      tags:
+      - diagnosis
   /diseases:
     get:
       description: Get a list of all diseases in the library
-      produces:
-      - application/json
+      parameters:
+      - description: Filter by category
+        in: query
+        name: category
+        type: string
       responses:
         "200":
           description: OK
@@ -438,6 +617,102 @@ paths:
       summary: Update disease details
       tags:
       - diseases
+  /diseases/categories:
+    get:
+      description: Get unique list of disease categories for key filtering
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List disease categories
+      tags:
+      - diseases
+  /outbreaks:
+    get:
+      description: Get a list of all active disease outbreaks for the map
+      parameters:
+      - description: Filter only verified outbreaks
+        in: query
+        name: verified
+        type: boolean
+      - description: User Latitude for distance
+        in: query
+        name: lat
+        type: number
+      - description: User Longitude for distance
+        in: query
+        name: long
+        type: number
+      - description: Limit number of results
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_outbreak.OutbreakResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List active outbreaks
+      tags:
+      - outbreaks
+  /outbreaks/{id}:
+    get:
+      description: Get full details of a specific outbreak
+      parameters:
+      - description: Outbreak ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User Latitude for distance
+        in: query
+        name: lat
+        type: number
+      - description: User Longitude for distance
+        in: query
+        name: long
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_outbreak.OutbreakResponse'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get outbreak details
+      tags:
+      - outbreaks
   /upload:
     post:
       consumes:

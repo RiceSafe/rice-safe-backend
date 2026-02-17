@@ -16,6 +16,18 @@ services:
     networks:
       - rice-safe-net
 
+  # mock ai service for testing
+  ai-service:
+    build:
+      context: ../mock-ai
+      dockerfile: Dockerfile
+    container_name: ricesafe_ai
+    restart: unless-stopped
+    ports:
+      - ${AI_PORT:-8000}:8000
+    networks:
+      - rice-safe-net
+
   backend:
     build:
       context: .
@@ -28,6 +40,7 @@ services:
       - DB_SOURCE=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
       - PORT=${PORT}
       - JWT_SECRET=${JWT_SECRET}
+      - AI_SERVICE_URL=http://ai-service:8000
     volumes:
       - ./:/app
     depends_on:

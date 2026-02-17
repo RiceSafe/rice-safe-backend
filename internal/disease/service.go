@@ -8,8 +8,10 @@ import (
 )
 
 type Service interface {
-	GetDiseases(ctx context.Context) ([]Disease, error)
+	GetDiseases(ctx context.Context, category string) ([]Disease, error)
+	GetCategories(ctx context.Context) ([]string, error)
 	GetDiseaseByID(ctx context.Context, id uuid.UUID) (*Disease, error)
+	GetByAlias(ctx context.Context, alias string) (*Disease, error)
 	CreateDisease(ctx context.Context, disease *Disease) error
 	UpdateDisease(ctx context.Context, id uuid.UUID, disease *Disease) error
 }
@@ -23,8 +25,8 @@ func NewService(repo Repository, storage storage.Service) Service {
 	return &service{repo: repo, storage: storage}
 }
 
-func (s *service) GetDiseases(ctx context.Context) ([]Disease, error) {
-	diseases, err := s.repo.GetAll(ctx)
+func (s *service) GetDiseases(ctx context.Context, category string) ([]Disease, error) {
+	diseases, err := s.repo.GetAll(ctx, category)
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +40,25 @@ func (s *service) GetDiseases(ctx context.Context) ([]Disease, error) {
 		}
 	}
 	return diseases, nil
+}
+
+func (s *service) GetCategories(ctx context.Context) ([]string, error) {
+	return s.repo.GetCategories(ctx)
+}
+
+func (s *service) GetByAlias(ctx context.Context, alias string) (*Disease, error) {
+	d, err := s.repo.GetByAlias(ctx, alias)
+	if err != nil {
+		return nil, err
+	}
+	// Sign URL
+	if d.ImageURL != "" {
+		url, err := s.storage.GetFileUrl(d.ImageURL)
+		if err == nil {
+			d.ImageURL = url
+		}
+	}
+	return d, nil
 }
 
 func (s *service) GetDiseaseByID(ctx context.Context, id uuid.UUID) (*Disease, error) {

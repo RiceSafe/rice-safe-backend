@@ -13,6 +13,7 @@ type Config struct {
 	JWTSecret          string
 	GCSBucketName      string
 	GCSCredentialsFile string
+	AIServiceURL       string
 }
 
 func LoadConfig() (*Config, error) {
@@ -26,6 +27,7 @@ func LoadConfig() (*Config, error) {
 		JWTSecret:          getEnv("JWT_SECRET", ""),
 		GCSBucketName:      getEnv("GCS_BUCKET_NAME", ""),
 		GCSCredentialsFile: getEnv("GCS_CREDENTIALS_FILE", "service-account.json"),
+		AIServiceURL:       getEnv("AI_SERVICE_URL", "http://localhost:8000"),
 	}
 
 	// Validate required variables

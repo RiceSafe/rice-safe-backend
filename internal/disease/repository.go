@@ -11,7 +11,8 @@ import (
 )
 
 type Repository interface {
-	GetAll(ctx context.Context) ([]Disease, error)
+	GetAll(ctx context.Context, category string) ([]Disease, error)
+	GetCategories(ctx context.Context) ([]string, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*Disease, error)
 	GetByAlias(ctx context.Context, alias string) (*Disease, error)
 	Create(ctx context.Context, disease *Disease) error
@@ -24,14 +25,22 @@ func NewRepository() Repository {
 	return &repository{}
 }
 
-func (r *repository) GetAll(ctx context.Context) ([]Disease, error) {
+func (r *repository) GetAll(ctx context.Context, category string) ([]Disease, error) {
 	query := `
 		SELECT id, alias, name, category, image_url, description, spread_details, 
 		       match_weather, symptoms, prevention, treatment, created_at, updated_at
 		FROM diseases
-		ORDER BY name ASC
 	`
-	rows, err := database.DB.Query(ctx, query)
+	args := []interface{}{}
+
+	if category != "" {
+		query += " WHERE category = $1"
+		args = append(args, category)
+	}
+
+	query += " ORDER BY name ASC"
+
+	rows, err := database.DB.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,6 +55,25 @@ func (r *repository) GetAll(ctx context.Context) ([]Disease, error) {
 		diseases = append(diseases, d)
 	}
 	return diseases, nil
+}
+
+func (r *repository) GetCategories(ctx context.Context) ([]string, error) {
+	query := `SELECT DISTINCT category FROM diseases WHERE category IS NOT NULL AND category != '' ORDER BY category ASC`
+	rows, err := database.DB.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categories []string
+	for rows.Next() {
+		var c string
+		if err := rows.Scan(&c); err != nil {
+			return nil, err
+		}
+		categories = append(categories, c)
+	}
+	return categories, nil
 }
 
 func (r *repository) GetByID(ctx context.Context, id uuid.UUID) (*Disease, error) {
