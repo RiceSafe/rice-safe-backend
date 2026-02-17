@@ -49,7 +49,7 @@ func main() {
 
 	// Initialize Auth Module
 	authRepo := auth.NewRepository()
-	authService := auth.NewService(authRepo, cfg.JWTSecret)
+	authService := auth.NewService(authRepo, cfg.JWTSecret, storageService)
 	auth.RegisterRoutes(app, authService)
 
 	// Upload Endpoint (Utility)

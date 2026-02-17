@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"mime/multipart"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -31,6 +33,42 @@ func RegisterRoutes(app *fiber.App, service Service) {
 	// Protected routes
 	group.Get("/me", Protected(), h.GetProfile)
 	group.Post("/change-password", Protected(), h.ChangePassword)
+	group.Put("/me", Protected(), h.UpdateProfile)
+}
+
+// UpdateProfile godoc
+// @Summary      Update user profile
+// @Description  Update username and/or avatar.
+// @Tags         auth
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     BearerAuth
+// @Param        username formData string false "New Username"
+// @Param        avatar formData file false "New Avatar Image"
+// @Success      200  {object}  User
+// @Failure      400  {object}  map[string]string
+// @Router       /auth/me [put]
+func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(string)
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user ID"})
+	}
+
+	username := c.FormValue("username")
+
+	var avatar *multipart.FileHeader
+	file, err := c.FormFile("avatar")
+	if err == nil {
+		avatar = file
+	}
+
+	user, err := h.service.UpdateProfile(c.Context(), id, username, avatar)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(user)
 }
 
 // Register godoc

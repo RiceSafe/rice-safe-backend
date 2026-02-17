@@ -201,6 +201,37 @@ paths:
       summary: Get user profile
       tags:
       - auth
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update username and/or avatar.
+      parameters:
+      - description: New Username
+        in: formData
+        name: username
+        type: string
+      - description: New Avatar Image
+        in: formData
+        name: avatar
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_auth.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update user profile
+      tags:
+      - auth
   /auth/register:
     post:
       consumes:
