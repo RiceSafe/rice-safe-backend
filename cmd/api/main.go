@@ -7,6 +7,7 @@ import (
 	"github.com/RiceSafe/rice-safe-backend/internal/auth"
 	"github.com/RiceSafe/rice-safe-backend/internal/config"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/database"
+	"github.com/RiceSafe/rice-safe-backend/internal/platform/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -40,10 +41,20 @@ func main() {
 	app.Use(recover.New())
 	app.Use(cors.New())
 
+	// Initialize Storage Module
+	storageService, err := storage.NewGCSService(cfg.GCSBucketName, cfg.GCSCredentialsFile)
+	if err != nil {
+		log.Printf("Failed to initialize GCS storage: %v", err)
+	}
+
 	// Initialize Auth Module
 	authRepo := auth.NewRepository()
 	authService := auth.NewService(authRepo, cfg.JWTSecret)
 	auth.RegisterRoutes(app, authService)
+
+	// Upload Endpoint (Utility)
+	storageHandler := storage.NewHandler(storageService)
+	app.Post("/api/upload", storageHandler.UploadFile)
 
 	// Health Check
 	app.Get("/health", func(c *fiber.Ctx) error {

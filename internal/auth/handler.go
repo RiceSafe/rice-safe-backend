@@ -55,7 +55,7 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Validation failed", "details": formatValidationErrors(err)})
 	}
 
-	res, err := h.service.Register(c.Context(), req)
+	res, err := h.service.Register(c.Context(), &req)
 	if err != nil {
 		if err.Error() == "email already exists" {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": err.Error()})
@@ -118,7 +118,7 @@ func (h *Handler) ChangePassword(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user ID"})
 	}
 
-	if err := h.service.ChangePassword(c.Context(), id, req); err != nil {
+	if err := h.service.ChangePassword(c.Context(), id, &req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -145,7 +145,7 @@ func (h *Handler) ForgotPassword(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Validation failed", "details": formatValidationErrors(err)})
 	}
 
-	if err := h.service.ForgotPassword(c.Context(), req); err != nil {
+	if err := h.service.ForgotPassword(c.Context(), &req); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to process request"})
 	}
 
@@ -172,7 +172,7 @@ func (h *Handler) ResetPassword(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Validation failed", "details": formatValidationErrors(err)})
 	}
 
-	if err := h.service.ResetPassword(c.Context(), req); err != nil {
+	if err := h.service.ResetPassword(c.Context(), &req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -203,7 +203,7 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	res, err := h.service.Login(c.Context(), req)
+	res, err := h.service.Login(c.Context(), &req)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid email or password"})
 	}

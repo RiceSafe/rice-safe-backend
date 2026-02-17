@@ -12,12 +12,12 @@ import (
 )
 
 type Service interface {
-	Register(ctx context.Context, req RegisterRequest) (*AuthResponse, error)
-	Login(ctx context.Context, req LoginRequest) (*AuthResponse, error)
+	Register(ctx context.Context, req *RegisterRequest) (*AuthResponse, error)
+	Login(ctx context.Context, req *LoginRequest) (*AuthResponse, error)
 	GetProfile(ctx context.Context, userID uuid.UUID) (*User, error)
-	ChangePassword(ctx context.Context, userID uuid.UUID, req ChangePasswordRequest) error
-	ForgotPassword(ctx context.Context, req ForgotPasswordRequest) error
-	ResetPassword(ctx context.Context, req ResetPasswordRequest) error
+	ChangePassword(ctx context.Context, userID uuid.UUID, req *ChangePasswordRequest) error
+	ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) error
+	ResetPassword(ctx context.Context, req *ResetPasswordRequest) error
 }
 
 type service struct {
@@ -29,7 +29,7 @@ func NewService(repo Repository, jwtSecret string) Service {
 	return &service{repo: repo, jwtSecret: jwtSecret}
 }
 
-func (s *service) Register(ctx context.Context, req RegisterRequest) (*AuthResponse, error) {
+func (s *service) Register(ctx context.Context, req *RegisterRequest) (*AuthResponse, error) {
 	hashedPwd, err := hashPassword(req.Password)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (s *service) Register(ctx context.Context, req RegisterRequest) (*AuthRespo
 	}, nil
 }
 
-func (s *service) Login(ctx context.Context, req LoginRequest) (*AuthResponse, error) {
+func (s *service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, error) {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, errors.New("invalid email or password")
@@ -84,7 +84,7 @@ func (s *service) GetProfile(ctx context.Context, userID uuid.UUID) (*User, erro
 }
 
 // ChangePassword updates the user's password
-func (s *service) ChangePassword(ctx context.Context, userID uuid.UUID, req ChangePasswordRequest) error {
+func (s *service) ChangePassword(ctx context.Context, userID uuid.UUID, req *ChangePasswordRequest) error {
 	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		return err
@@ -103,7 +103,7 @@ func (s *service) ChangePassword(ctx context.Context, userID uuid.UUID, req Chan
 }
 
 // ForgotPassword handles the password reset request
-func (s *service) ForgotPassword(ctx context.Context, req ForgotPasswordRequest) error {
+func (s *service) ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		// Return nil even if email not found to prevent enumeration
@@ -125,7 +125,7 @@ func (s *service) ForgotPassword(ctx context.Context, req ForgotPasswordRequest)
 }
 
 // ResetPassword resets the user's password using the token
-func (s *service) ResetPassword(ctx context.Context, req ResetPasswordRequest) error {
+func (s *service) ResetPassword(ctx context.Context, req *ResetPasswordRequest) error {
 	user, err := s.repo.GetUserByResetToken(ctx, req.Token)
 	if err != nil {
 		return errors.New("invalid or expired token")

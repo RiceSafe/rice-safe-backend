@@ -257,6 +257,41 @@ paths:
       summary: Reset password
       tags:
       - auth
+  /upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload an image file to Google Cloud Storage.
+      parameters:
+      - description: Image file to upload
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Upload a file
+      tags:
+      - platform
 securityDefinitions:
   BearerAuth:
     in: header
