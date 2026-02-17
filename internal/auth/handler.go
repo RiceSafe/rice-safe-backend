@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"mime/multipart"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -31,6 +33,42 @@ func RegisterRoutes(app *fiber.App, service Service) {
 	// Protected routes
 	group.Get("/me", Protected(), h.GetProfile)
 	group.Post("/change-password", Protected(), h.ChangePassword)
+	group.Put("/me", Protected(), h.UpdateProfile)
+}
+
+// UpdateProfile godoc
+// @Summary      Update user profile
+// @Description  Update username and/or avatar.
+// @Tags         auth
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     BearerAuth
+// @Param        username formData string false "New Username"
+// @Param        avatar formData file false "New Avatar Image"
+// @Success      200  {object}  User
+// @Failure      400  {object}  map[string]string
+// @Router       /auth/me [put]
+func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(string)
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user ID"})
+	}
+
+	username := c.FormValue("username")
+
+	var avatar *multipart.FileHeader
+	file, err := c.FormFile("avatar")
+	if err == nil {
+		avatar = file
+	}
+
+	user, err := h.service.UpdateProfile(c.Context(), id, username, avatar)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(user)
 }
 
 // Register godoc
@@ -55,7 +93,7 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Validation failed", "details": formatValidationErrors(err)})
 	}
 
-	res, err := h.service.Register(c.Context(), req)
+	res, err := h.service.Register(c.Context(), &req)
 	if err != nil {
 		if err.Error() == "email already exists" {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": err.Error()})
@@ -118,7 +156,7 @@ func (h *Handler) ChangePassword(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user ID"})
 	}
 
-	if err := h.service.ChangePassword(c.Context(), id, req); err != nil {
+	if err := h.service.ChangePassword(c.Context(), id, &req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -145,7 +183,7 @@ func (h *Handler) ForgotPassword(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Validation failed", "details": formatValidationErrors(err)})
 	}
 
-	if err := h.service.ForgotPassword(c.Context(), req); err != nil {
+	if err := h.service.ForgotPassword(c.Context(), &req); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to process request"})
 	}
 
@@ -172,7 +210,7 @@ func (h *Handler) ResetPassword(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Validation failed", "details": formatValidationErrors(err)})
 	}
 
-	if err := h.service.ResetPassword(c.Context(), req); err != nil {
+	if err := h.service.ResetPassword(c.Context(), &req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -203,7 +241,7 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	res, err := h.service.Login(c.Context(), req)
+	res, err := h.service.Login(c.Context(), &req)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid email or password"})
 	}

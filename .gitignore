@@ -26,3 +26,6 @@ go.work
 # Build artifacts
 tmp/
 main
+
+# Secrets
+service-account.json

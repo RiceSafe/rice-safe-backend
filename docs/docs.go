@@ -181,6 +181,55 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update username and/or avatar.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Update user profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "New Username",
+                        "name": "username",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "New Avatar Image",
+                        "name": "avatar",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/auth/register": {
@@ -268,12 +317,553 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/diagnosis": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Upload an image to get a disease prediction and details.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "diagnosis"
+                ],
+                "summary": "Diagnose Disease from Image",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Rice Leaf Image",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Symptoms Description",
+                        "name": "description",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_diagnosis.DiagnosisResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diagnosis/history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a list of past diagnoses for the current user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "diagnosis"
+                ],
+                "summary": "Get Diagnosis History",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_diagnosis.HistoryResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diseases": {
+            "get": {
+                "description": "Get a list of all diseases in the library",
+                "tags": [
+                    "diseases"
+                ],
+                "summary": "List all diseases",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by category",
+                        "name": "category",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_disease.Disease"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new disease entry",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "diseases"
+                ],
+                "summary": "Create a new disease",
+                "parameters": [
+                    {
+                        "description": "Disease Data",
+                        "name": "disease",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_disease.Disease"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_disease.Disease"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diseases/categories": {
+            "get": {
+                "description": "Get unique list of disease categories for key filtering",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "diseases"
+                ],
+                "summary": "List disease categories",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diseases/{id}": {
+            "get": {
+                "description": "Get full details of a specific disease",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "diseases"
+                ],
+                "summary": "Get disease details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Disease ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_disease.Disease"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update details of an existing disease",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "diseases"
+                ],
+                "summary": "Update disease details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Disease ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Data",
+                        "name": "disease",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_disease.Disease"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_disease.Disease"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/outbreaks": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a list of all active disease outbreaks for the map",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "outbreaks"
+                ],
+                "summary": "List active outbreaks",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "Filter only verified outbreaks",
+                        "name": "verified",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "User Latitude for distance",
+                        "name": "lat",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "User Longitude for distance",
+                        "name": "long",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit number of results",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_outbreak.OutbreakResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/outbreaks/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get full details of a specific outbreak",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "outbreaks"
+                ],
+                "summary": "Get outbreak details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Outbreak ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "User Latitude for distance",
+                        "name": "lat",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "User Longitude for distance",
+                        "name": "long",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_outbreak.OutbreakResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/upload": {
+            "post": {
+                "description": "Upload an image file to Google Cloud Storage.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "platform"
+                ],
+                "summary": "Upload a file",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image file to upload",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "fiber.Map": {
             "type": "object",
             "additionalProperties": true
+        },
+        "github_com_RiceSafe_rice-safe-backend_internal_disease.Disease": {
+            "type": "object",
+            "properties": {
+                "alias": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "match_weather": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "prevention": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_RiceSafe_rice-safe-backend_internal_disease.InfoSection"
+                    }
+                },
+                "spread_details": {
+                    "type": "string"
+                },
+                "symptoms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_RiceSafe_rice-safe-backend_internal_disease.InfoSection"
+                    }
+                },
+                "treatment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_RiceSafe_rice-safe-backend_internal_disease.InfoSection"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_RiceSafe_rice-safe-backend_internal_disease.InfoSection": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
         },
         "internal_auth.AuthResponse": {
             "type": "object",
@@ -398,6 +988,171 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "internal_diagnosis.DiagnosisResponse": {
+            "type": "object",
+            "properties": {
+                "confidence": {
+                    "description": "Percentage (0-100)",
+                    "type": "number"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "diagnosis_id": {
+                    "type": "string"
+                },
+                "disease_result": {
+                    "description": "Full details from Disease Library",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_RiceSafe_rice-safe-backend_internal_disease.Disease"
+                        }
+                    ]
+                },
+                "image_url": {
+                    "description": "User uploaded image",
+                    "type": "string"
+                },
+                "info_message": {
+                    "description": "User-facing message for UI",
+                    "type": "string"
+                },
+                "prediction": {
+                    "description": "AI Result: normal, not_rice, not_clear, or disease_alias",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_diagnosis.HistoryResponse": {
+            "type": "object",
+            "properties": {
+                "confidence": {
+                    "type": "number"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "disease_name": {
+                    "description": "Thai Name or \"Healthy\"",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "prediction": {
+                    "description": "Disease Alias or \"Normal\"",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_disease.Disease": {
+            "type": "object",
+            "properties": {
+                "alias": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "match_weather": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "prevention": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_disease.InfoSection"
+                    }
+                },
+                "spread_details": {
+                    "type": "string"
+                },
+                "symptoms": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_disease.InfoSection"
+                    }
+                },
+                "treatment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_disease.InfoSection"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_disease.InfoSection": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_outbreak.OutbreakResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "disease_id": {
+                    "type": "string"
+                },
+                "disease_name": {
+                    "type": "string"
+                },
+                "distance": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "is_verified": {
+                    "type": "boolean"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
         }
     },
     "securityDefinitions": {
@@ -415,8 +1170,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/api",
 	Schemes:          []string{},
-	Title:            "RiceSafe Backend API",
-	Description:      "Backend API for RiceSafe Mobile Application",
+	Title:            "RiceSafe API",
+	Description:      "Backend API for RiceSafe Application",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

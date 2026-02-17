@@ -8,9 +8,12 @@ import (
 )
 
 type Config struct {
-	Port      string
-	DBSource  string
-	JWTSecret string
+	Port               string
+	DBSource           string
+	JWTSecret          string
+	GCSBucketName      string
+	GCSCredentialsFile string
+	AIServiceURL       string
 }
 
 func LoadConfig() (*Config, error) {
@@ -19,9 +22,12 @@ func LoadConfig() (*Config, error) {
 	}
 
 	config := &Config{
-		Port:      getEnv("PORT", "8080"),
-		DBSource:  getEnv("DB_SOURCE", ""),
-		JWTSecret: getEnv("JWT_SECRET", ""),
+		Port:               getEnv("PORT", "8080"),
+		DBSource:           getEnv("DB_SOURCE", ""),
+		JWTSecret:          getEnv("JWT_SECRET", ""),
+		GCSBucketName:      getEnv("GCS_BUCKET_NAME", ""),
+		GCSCredentialsFile: getEnv("GCS_CREDENTIALS_FILE", "service-account.json"),
+		AIServiceURL:       getEnv("AI_SERVICE_URL", "http://localhost:8000"),
 	}
 
 	// Validate required variables

@@ -15,6 +15,7 @@ type Repository interface {
 	CreateUser(ctx context.Context, user *User) error
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
+	UpdateUser(ctx context.Context, user *User) error
 
 	UpdatePassword(ctx context.Context, id uuid.UUID, passwordHash string) error
 	SaveResetToken(ctx context.Context, email string, token string, expiry time.Time) error
@@ -78,6 +79,24 @@ func (r *repository) GetUserByID(ctx context.Context, id uuid.UUID) (*User, erro
 
 	row := database.DB.QueryRow(ctx, query, id)
 	return scanUser(row)
+}
+
+// UpdateUser updates user profile
+func (r *repository) UpdateUser(ctx context.Context, user *User) error {
+	query := `
+		UPDATE users
+		SET username = $1, email = $2, password_hash = $3, avatar_url = $4, updated_at = $5
+		WHERE id = $6
+	`
+	_, err := database.DB.Exec(ctx, query,
+		user.Username,
+		user.Email,
+		user.PasswordHash,
+		user.AvatarURL,
+		time.Now(),
+		user.ID,
+	)
+	return err
 }
 
 // UpdatePassword updates the user's password
