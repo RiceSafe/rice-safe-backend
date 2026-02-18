@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/RiceSafe/rice-safe-backend/internal/auth"
+	"github.com/RiceSafe/rice-safe-backend/internal/community"
 	"github.com/RiceSafe/rice-safe-backend/internal/config"
 	"github.com/RiceSafe/rice-safe-backend/internal/diagnosis"
 	"github.com/RiceSafe/rice-safe-backend/internal/disease"
@@ -62,6 +63,9 @@ func main() {
 	diagnosisRepo := diagnosis.NewRepository()
 	diagnosisService := diagnosis.NewService(diagnosisRepo, diseaseRepo, outbreakRepo, storageService, aiClient)
 
+	communityRepo := community.NewRepository()
+	communityService := community.NewService(communityRepo, storageService)
+
 	// Setup Fiber
 	app := fiber.New()
 	app.Use(logger.New())
@@ -86,6 +90,8 @@ func main() {
 	diagnosis.RegisterRoutes(api, diagnosisService)
 	// Register Outbreak Routes
 	outbreak.RegisterRoutes(api, outbreakService)
+	// Register Community Routes
+	community.RegisterRoutes(api, communityService)
 
 	// Start Server
 	log.Fatal(app.Listen(":" + cfg.Port))

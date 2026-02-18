@@ -131,27 +131,84 @@ definitions:
       username:
         type: string
     type: object
+  internal_community.Comment:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      post_id:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  internal_community.CreateCommentRequest:
+    properties:
+      content:
+        type: string
+    required:
+    - content
+    type: object
+  internal_community.Post:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  internal_community.PostResponse:
+    properties:
+      author_avatar:
+        type: string
+      author_name:
+        type: string
+      comment_count:
+        type: integer
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      is_liked:
+        description: Does current user like this?
+        type: boolean
+      like_count:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
   internal_diagnosis.DiagnosisResponse:
     properties:
       confidence:
-        description: Percentage (0-100)
         type: number
       created_at:
         type: string
       diagnosis_id:
         type: string
       disease_result:
-        allOf:
-        - $ref: '#/definitions/github_com_RiceSafe_rice-safe-backend_internal_disease.Disease'
-        description: Full details from Disease Library
+        $ref: '#/definitions/github_com_RiceSafe_rice-safe-backend_internal_disease.Disease'
       image_url:
-        description: User uploaded image
         type: string
       info_message:
-        description: User-facing message for UI
         type: string
       prediction:
-        description: 'AI Result: normal, not_rice, not_clear, or disease_alias'
         type: string
     type: object
   internal_diagnosis.HistoryResponse:
@@ -161,14 +218,12 @@ definitions:
       created_at:
         type: string
       disease_name:
-        description: Thai Name or "Healthy"
         type: string
       id:
         type: string
       image_url:
         type: string
       prediction:
-        description: Disease Alias or "Normal"
         type: string
     type: object
   internal_disease.Disease:
@@ -441,6 +496,135 @@ paths:
       summary: Reset password
       tags:
       - auth
+  /community/posts:
+    get:
+      description: Get list of posts with pagination
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_community.PostResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get community feed
+      tags:
+      - community
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a community post with optional image
+      parameters:
+      - description: Post Content
+        in: formData
+        name: content
+        required: true
+        type: string
+      - description: Post Image
+        in: formData
+        name: image
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_community.Post'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new post
+      tags:
+      - community
+  /community/posts/{id}:
+    get:
+      description: Get a single post details
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_community.PostResponse'
+      security:
+      - BearerAuth: []
+      summary: Get post details
+      tags:
+      - community
+  /community/posts/{id}/comments:
+    post:
+      description: Add a comment to a post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Content
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_community.CreateCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_community.Comment'
+      security:
+      - BearerAuth: []
+      summary: Add a comment
+      tags:
+      - community
+  /community/posts/{id}/like:
+    post:
+      description: Toggle like status for a post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Like/Unlike a post
+      tags:
+      - community
   /diagnosis:
     post:
       consumes:

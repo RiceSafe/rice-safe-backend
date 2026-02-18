@@ -318,6 +318,212 @@ const docTemplate = `{
                 }
             }
         },
+        "/community/posts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get list of posts with pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "community"
+                ],
+                "summary": "Get community feed",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_community.PostResponse"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a community post with optional image",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "community"
+                ],
+                "summary": "Create a new post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post Content",
+                        "name": "content",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Post Image",
+                        "name": "image",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_community.Post"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/community/posts/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a single post details",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "community"
+                ],
+                "summary": "Get post details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_community.PostResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/community/posts/{id}/comments": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a comment to a post",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "community"
+                ],
+                "summary": "Add a comment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Content",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_community.CreateCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_community.Comment"
+                        }
+                    }
+                }
+            }
+        },
+        "/community/posts/{id}/like": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Toggle like status for a post",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "community"
+                ],
+                "summary": "Like/Unlike a post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/diagnosis": {
             "post": {
                 "security": [
@@ -989,11 +1195,106 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_community.Comment": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "post_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_community.CreateCommentRequest": {
+            "type": "object",
+            "required": [
+                "content"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_community.Post": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_community.PostResponse": {
+            "type": "object",
+            "properties": {
+                "author_avatar": {
+                    "type": "string"
+                },
+                "author_name": {
+                    "type": "string"
+                },
+                "comment_count": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_liked": {
+                    "description": "Does current user like this?",
+                    "type": "boolean"
+                },
+                "like_count": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_diagnosis.DiagnosisResponse": {
             "type": "object",
             "properties": {
                 "confidence": {
-                    "description": "Percentage (0-100)",
                     "type": "number"
                 },
                 "created_at": {
@@ -1003,23 +1304,15 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "disease_result": {
-                    "description": "Full details from Disease Library",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/github_com_RiceSafe_rice-safe-backend_internal_disease.Disease"
-                        }
-                    ]
+                    "$ref": "#/definitions/github_com_RiceSafe_rice-safe-backend_internal_disease.Disease"
                 },
                 "image_url": {
-                    "description": "User uploaded image",
                     "type": "string"
                 },
                 "info_message": {
-                    "description": "User-facing message for UI",
                     "type": "string"
                 },
                 "prediction": {
-                    "description": "AI Result: normal, not_rice, not_clear, or disease_alias",
                     "type": "string"
                 }
             }
@@ -1034,7 +1327,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "disease_name": {
-                    "description": "Thai Name or \"Healthy\"",
                     "type": "string"
                 },
                 "id": {
@@ -1044,7 +1336,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "prediction": {
-                    "description": "Disease Alias or \"Normal\"",
                     "type": "string"
                 }
             }
