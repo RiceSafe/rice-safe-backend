@@ -1,6 +1,7 @@
 package outbreak
 
 import (
+	"github.com/RiceSafe/rice-safe-backend/internal/auth"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -19,12 +20,13 @@ func RegisterRoutes(app fiber.Router, service Service) {
 
 	group.Get("/", h.GetOutbreaks)
 	group.Get("/:id", h.GetOutbreakByID)
+	group.Post("/:id/verify", auth.RequireRole("EXPERT", "ADMIN"), h.VerifyOutbreak)
 }
 
 // GetOutbreakByID godoc
 // @Summary      Get outbreak details
 // @Description  Get full details of a specific outbreak
-// @Tags         outbreaks
+// @Tags         Outbreaks
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id         path      string  true  "Outbreak ID"
@@ -58,7 +60,7 @@ func (h *Handler) GetOutbreakByID(c *fiber.Ctx) error {
 // GetOutbreaks godoc
 // @Summary      List active outbreaks
 // @Description  Get a list of all active disease outbreaks for the map
-// @Tags         outbreaks
+// @Tags         Outbreaks
 // @Produce      json
 // @Security     BearerAuth
 // @Param        verified   query     boolean false "Filter only verified outbreaks"
@@ -93,4 +95,36 @@ func (h *Handler) GetOutbreaks(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(outbreaks)
+}
+
+// VerifyOutbreak godoc
+// @Summary      Verify an outbreak
+// @Description  Allows an Expert to verify a reported outbreak
+// @Tags         Outbreaks
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Outbreak ID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /outbreaks/{id}/verify [post]
+func (h *Handler) VerifyOutbreak(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	outbreakID, err := uuid.Parse(idStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid Outbreak ID"})
+	}
+
+	userIDStr := c.Locals("user_id").(string)
+	expertID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user ID"})
+	}
+
+	if err := h.service.VerifyOutbreak(c.Context(), outbreakID, expertID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to verify outbreak"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Outbreak successfully verified"})
 }
