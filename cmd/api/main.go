@@ -7,8 +7,10 @@ import (
 	"github.com/RiceSafe/rice-safe-backend/internal/auth"
 	"github.com/RiceSafe/rice-safe-backend/internal/community"
 	"github.com/RiceSafe/rice-safe-backend/internal/config"
+	"github.com/RiceSafe/rice-safe-backend/internal/dashboard"
 	"github.com/RiceSafe/rice-safe-backend/internal/diagnosis"
 	"github.com/RiceSafe/rice-safe-backend/internal/disease"
+	"github.com/RiceSafe/rice-safe-backend/internal/notification"
 	"github.com/RiceSafe/rice-safe-backend/internal/outbreak"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/ai_client"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/database"
@@ -48,6 +50,7 @@ func main() {
 	}
 
 	aiClient := ai_client.NewClient(cfg.AIServiceURL)
+	weatherClient := dashboard.NewWeatherClient(cfg.OpenWeatherMapKey, cfg.WeatherAPIURL)
 
 	// Initialize Modules
 	authRepo := auth.NewRepository()
@@ -60,8 +63,12 @@ func main() {
 	outbreakRepo := outbreak.NewRepository()
 	outbreakService := outbreak.NewService(outbreakRepo, storageService)
 
+	notificationRepo := notification.NewRepository()
+	notificationService := notification.NewService(notificationRepo)
+	notificationHandler := notification.NewHandler(notificationService)
+
 	diagnosisRepo := diagnosis.NewRepository()
-	diagnosisService := diagnosis.NewService(diagnosisRepo, diseaseRepo, outbreakRepo, storageService, aiClient)
+	diagnosisService := diagnosis.NewService(diagnosisRepo, diseaseRepo, outbreakRepo, storageService, aiClient, notificationService)
 
 	communityRepo := community.NewRepository()
 	communityService := community.NewService(communityRepo, storageService)
@@ -92,6 +99,10 @@ func main() {
 	outbreak.RegisterRoutes(api, outbreakService)
 	// Register Community Routes
 	community.RegisterRoutes(api, communityService)
+	// Register Notification Routes
+	notificationHandler.RegisterRoutes(api)
+	// Register Dashboard Routes
+	dashboard.RegisterRoutes(api, weatherClient)
 
 	// Start Server
 	log.Fatal(app.Listen(":" + cfg.Port))

@@ -14,6 +14,8 @@ type Config struct {
 	GCSBucketName      string
 	GCSCredentialsFile string
 	AIServiceURL       string
+	OpenWeatherMapKey  string
+	WeatherAPIURL      string
 }
 
 func LoadConfig() (*Config, error) {
@@ -28,6 +30,8 @@ func LoadConfig() (*Config, error) {
 		GCSBucketName:      getEnv("GCS_BUCKET_NAME", ""),
 		GCSCredentialsFile: getEnv("GCS_CREDENTIALS_FILE", "service-account.json"),
 		AIServiceURL:       getEnv("AI_SERVICE_URL", "http://localhost:8000"),
+		OpenWeatherMapKey:  getEnv("OPEN_WEATHER_MAP_KEY", ""),
+		WeatherAPIURL:      getEnv("WEATHER_API_URL", "https://api.openweathermap.org/data/2.5/weather"),
 	}
 
 	// Validate required variables
