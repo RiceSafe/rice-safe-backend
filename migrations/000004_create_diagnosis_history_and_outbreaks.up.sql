@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS diagnosis_history (
     prediction VARCHAR(50),
     image_url VARCHAR(255) NOT NULL,
     confidence FLOAT NOT NULL,
-    latitude FLOAT NOT NULL,
-    longitude FLOAT NOT NULL,
+    latitude FLOAT,
+    longitude FLOAT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     CONSTRAINT fk_diagnosis_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_diagnosis_disease FOREIGN KEY (disease_id) REFERENCES diseases(id) ON DELETE SET NULL

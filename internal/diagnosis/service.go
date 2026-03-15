@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/RiceSafe/rice-safe-backend/internal/disease"
+	"github.com/RiceSafe/rice-safe-backend/internal/notification"
 	"github.com/RiceSafe/rice-safe-backend/internal/outbreak"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/ai_client"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/storage"
@@ -24,15 +25,17 @@ type service struct {
 	outbreakRepo outbreak.Repository
 	storage      storage.Service
 	aiClient     ai_client.Client
+	notifService notification.Service
 }
 
-func NewService(repo Repository, diseaseRepo disease.Repository, outbreakRepo outbreak.Repository, storage storage.Service, aiClient ai_client.Client) Service {
+func NewService(repo Repository, diseaseRepo disease.Repository, outbreakRepo outbreak.Repository, storage storage.Service, aiClient ai_client.Client, notifService notification.Service) Service {
 	return &service{
 		repo:         repo,
 		diseaseRepo:  diseaseRepo,
 		outbreakRepo: outbreakRepo,
 		storage:      storage,
 		aiClient:     aiClient,
+		notifService: notifService,
 	}
 }
 
@@ -107,18 +110,22 @@ func (s *service) Diagnose(ctx context.Context, userID uuid.UUID, req *Diagnosis
 	// Auto-Outbreak Logic
 	isDisease := prediction.Prediction != "not_rice" && prediction.Prediction != "not_clear" && prediction.Prediction != "normal"
 
-	if isDisease && diseaseID != nil {
+	if isDisease && diseaseID != nil && req.Latitude != nil && req.Longitude != nil {
 		ob := &outbreak.Outbreak{
 			DiseaseID:        *diseaseID,
 			DiagnosisID:      &history.ID,
 			ReportedByUserID: &userID,
-			Latitude:         req.Latitude,
-			Longitude:        req.Longitude,
+			Latitude:         *req.Latitude,
+			Longitude:        *req.Longitude,
 		}
 		if err := s.outbreakRepo.Create(ctx, ob); err != nil {
 			fmt.Printf("Failed to auto-create outbreak: %v\n", err)
 		} else {
 			fmt.Println("Auto-created outbreak successfully")
+			// Trigger notification to nearby users
+			if err := s.notifService.NotifyNearbyFarmers(ctx, ob, diseaseResult.Name); err != nil {
+				fmt.Printf("Failed to notify nearby farmers: %v\n", err)
+			}
 		}
 	}
 

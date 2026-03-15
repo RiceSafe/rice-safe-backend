@@ -17,7 +17,7 @@ func NewHandler(service Service) *Handler {
 // UploadFile godoc
 // @Summary      Upload a file
 // @Description  Upload an image file to Google Cloud Storage.
-// @Tags         platform
+// @Tags         Platform
 // @Accept       multipart/form-data
 // @Produce      json
 // @Param        image formData file true "Image file to upload"
