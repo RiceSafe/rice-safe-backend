@@ -27,7 +27,7 @@ func RegisterRoutes(app *fiber.App, service Service) {
 // GetCategories godoc
 // @Summary      List disease categories
 // @Description  Get unique list of disease categories for key filtering
-// @Tags         diseases
+// @Tags         Diseases
 // @Produce      json
 // @Success      200  {array}   string
 // @Failure      500  {object}  map[string]string
@@ -43,7 +43,7 @@ func (h *Handler) GetCategories(c *fiber.Ctx) error {
 // GetDiseases godoc
 // @Summary      List all diseases
 // @Description  Get a list of all diseases in the library
-// @Tags         diseases
+// @Tags         Diseases
 // @Param        category query     string  false "Filter by category"
 // @Success      200  {array}   Disease
 // @Failure      500  {object}  map[string]string
@@ -60,7 +60,7 @@ func (h *Handler) GetDiseases(c *fiber.Ctx) error {
 // GetDiseaseByID godoc
 // @Summary      Get disease details
 // @Description  Get full details of a specific disease
-// @Tags         diseases
+// @Tags         Diseases
 // @Produce      json
 // @Param        id   path      string  true  "Disease ID"
 // @Success      200  {object}  Disease
@@ -83,7 +83,7 @@ func (h *Handler) GetDiseaseByID(c *fiber.Ctx) error {
 // CreateDisease godoc
 // @Summary      Create a new disease
 // @Description  Create a new disease entry
-// @Tags         diseases
+// @Tags         Diseases
 // @Accept       json
 // @Produce      json
 // @Param        disease body Disease true "Disease Data"
@@ -105,7 +105,7 @@ func (h *Handler) CreateDisease(c *fiber.Ctx) error {
 // UpdateDisease godoc
 // @Summary      Update disease details
 // @Description  Update details of an existing disease
-// @Tags         diseases
+// @Tags         Diseases
 // @Accept       json
 // @Produce      json
 // @Param        id   path      string  true  "Disease ID"

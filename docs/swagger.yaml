@@ -185,7 +185,6 @@ definitions:
       image_url:
         type: string
       is_liked:
-        description: Does current user like this?
         type: boolean
       like_count:
         type: integer
@@ -193,6 +192,21 @@ definitions:
         type: string
       user_id:
         type: string
+    type: object
+  internal_dashboard.WeatherResponse:
+    properties:
+      condition:
+        type: string
+      description:
+        type: string
+      humidity:
+        type: integer
+      icon_url:
+        type: string
+      location_name:
+        type: string
+      temperature:
+        type: number
     type: object
   internal_diagnosis.DiagnosisResponse:
     properties:
@@ -270,6 +284,54 @@ definitions:
       title:
         type: string
     type: object
+  internal_notification.Notification:
+    properties:
+      body:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      is_read:
+        type: boolean
+      reference_id:
+        type: string
+      title:
+        type: string
+      type:
+        description: e.g., "OUTBREAK_NEARBY"
+        type: string
+      user_id:
+        type: string
+    type: object
+  internal_notification.NotificationSettings:
+    properties:
+      enabled:
+        type: boolean
+      latitude:
+        type: number
+      longitude:
+        type: number
+      notify_nearby:
+        type: boolean
+      radius_km:
+        type: number
+      user_id:
+        type: string
+    type: object
+  internal_notification.UpdateSettingsRequest:
+    properties:
+      enabled:
+        type: boolean
+      latitude:
+        type: number
+      longitude:
+        type: number
+      notify_nearby:
+        type: boolean
+      radius_km:
+        type: number
+    type: object
   internal_outbreak.OutbreakResponse:
     properties:
       created_at:
@@ -333,7 +395,7 @@ paths:
       - BearerAuth: []
       summary: Change user password
       tags:
-      - auth
+      - Auth
   /auth/forgot-password:
     post:
       consumes:
@@ -359,7 +421,7 @@ paths:
             $ref: '#/definitions/fiber.Map'
       summary: Request password reset
       tags:
-      - auth
+      - Auth
   /auth/login:
     post:
       consumes:
@@ -389,7 +451,7 @@ paths:
             $ref: '#/definitions/fiber.Map'
       summary: Login user
       tags:
-      - auth
+      - Auth
   /auth/me:
     get:
       description: Get the profile of the currently logged-in user
@@ -408,7 +470,7 @@ paths:
       - BearerAuth: []
       summary: Get user profile
       tags:
-      - auth
+      - Auth
     put:
       consumes:
       - multipart/form-data
@@ -439,7 +501,7 @@ paths:
       - BearerAuth: []
       summary: Update user profile
       tags:
-      - auth
+      - Auth
   /auth/register:
     post:
       consumes:
@@ -469,7 +531,7 @@ paths:
             $ref: '#/definitions/fiber.Map'
       summary: Register a new user
       tags:
-      - auth
+      - Auth
   /auth/reset-password:
     post:
       consumes:
@@ -495,7 +557,7 @@ paths:
             $ref: '#/definitions/fiber.Map'
       summary: Reset password
       tags:
-      - auth
+      - Auth
   /community/posts:
     get:
       description: Get list of posts with pagination
@@ -521,7 +583,7 @@ paths:
       - BearerAuth: []
       summary: Get community feed
       tags:
-      - community
+      - Community
     post:
       consumes:
       - multipart/form-data
@@ -553,7 +615,7 @@ paths:
       - BearerAuth: []
       summary: Create a new post
       tags:
-      - community
+      - Community
   /community/posts/{id}:
     get:
       description: Get a single post details
@@ -574,7 +636,7 @@ paths:
       - BearerAuth: []
       summary: Get post details
       tags:
-      - community
+      - Community
   /community/posts/{id}/comments:
     post:
       description: Add a comment to a post
@@ -601,7 +663,7 @@ paths:
       - BearerAuth: []
       summary: Add a comment
       tags:
-      - community
+      - Community
   /community/posts/{id}/like:
     post:
       description: Toggle like status for a post
@@ -624,7 +686,45 @@ paths:
       - BearerAuth: []
       summary: Like/Unlike a post
       tags:
-      - community
+      - Community
+  /dashboard/weather:
+    get:
+      description: Get real-time weather data for a given location using OpenWeatherMap
+      parameters:
+      - description: Latitude
+        in: query
+        name: lat
+        required: true
+        type: number
+      - description: Longitude
+        in: query
+        name: long
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_dashboard.WeatherResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current weather
+      tags:
+      - Dashboard
   /diagnosis:
     post:
       consumes:
@@ -640,6 +740,14 @@ paths:
         in: formData
         name: description
         type: string
+      - description: Latitude (Optional, prevents outbreak if missing)
+        in: formData
+        name: latitude
+        type: number
+      - description: Longitude (Optional, prevents outbreak if missing)
+        in: formData
+        name: longitude
+        type: number
       produces:
       - application/json
       responses:
@@ -663,7 +771,7 @@ paths:
       - BearerAuth: []
       summary: Diagnose Disease from Image
       tags:
-      - diagnosis
+      - Diagnosis
   /diagnosis/history:
     get:
       description: Get a list of past diagnoses for the current user
@@ -692,7 +800,7 @@ paths:
       - BearerAuth: []
       summary: Get Diagnosis History
       tags:
-      - diagnosis
+      - Diagnosis
   /diseases:
     get:
       description: Get a list of all diseases in the library
@@ -716,7 +824,7 @@ paths:
             type: object
       summary: List all diseases
       tags:
-      - diseases
+      - Diseases
     post:
       consumes:
       - application/json
@@ -743,7 +851,7 @@ paths:
             type: object
       summary: Create a new disease
       tags:
-      - diseases
+      - Diseases
   /diseases/{id}:
     get:
       description: Get full details of a specific disease
@@ -768,7 +876,7 @@ paths:
             type: object
       summary: Get disease details
       tags:
-      - diseases
+      - Diseases
     put:
       consumes:
       - application/json
@@ -800,7 +908,7 @@ paths:
             type: object
       summary: Update disease details
       tags:
-      - diseases
+      - Diseases
   /diseases/categories:
     get:
       description: Get unique list of disease categories for key filtering
@@ -821,7 +929,101 @@ paths:
             type: object
       summary: List disease categories
       tags:
-      - diseases
+      - Diseases
+  /notifications:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of notifications for the authenticated
+        user.
+      parameters:
+      - default: 20
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_notification.Notification'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get user notifications
+      tags:
+      - Notifications
+  /notifications/{id}/read:
+    put:
+      consumes:
+      - application/json
+      description: Marks a specific notification as read.
+      parameters:
+      - description: Notification ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mark notification as read
+      tags:
+      - Notifications
+  /notifications/read-all:
+    put:
+      consumes:
+      - application/json
+      description: Marks all unread notifications for the user as read.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mark all notifications as read
+      tags:
+      - Notifications
+  /notifications/unread-count:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the total number of unread notifications.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get unread notification count
+      tags:
+      - Notifications
   /outbreaks:
     get:
       description: Get a list of all active disease outbreaks for the map
@@ -861,7 +1063,7 @@ paths:
       - BearerAuth: []
       summary: List active outbreaks
       tags:
-      - outbreaks
+      - Outbreaks
   /outbreaks/{id}:
     get:
       description: Get full details of a specific outbreak
@@ -896,7 +1098,88 @@ paths:
       - BearerAuth: []
       summary: Get outbreak details
       tags:
-      - outbreaks
+      - Outbreaks
+  /outbreaks/{id}/verify:
+    post:
+      description: Allows an Expert to verify a reported outbreak
+      parameters:
+      - description: Outbreak ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Verify an outbreak
+      tags:
+      - Outbreaks
+  /settings/notifications:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the user's notification preferences.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_notification.NotificationSettings'
+      security:
+      - BearerAuth: []
+      summary: Get notification settings
+      tags:
+      - Settings
+    put:
+      consumes:
+      - application/json
+      description: Updates the user's notification preferences.
+      parameters:
+      - description: Settings Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_notification.UpdateSettingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_notification.NotificationSettings'
+      security:
+      - BearerAuth: []
+      summary: Update notification settings
+      tags:
+      - Settings
   /upload:
     post:
       consumes:
@@ -931,7 +1214,7 @@ paths:
             type: object
       summary: Upload a file
       tags:
-      - platform
+      - Platform
 securityDefinitions:
   BearerAuth:
     in: header

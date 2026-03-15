@@ -30,7 +30,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Auth"
                 ],
                 "summary": "Change user password",
                 "parameters": [
@@ -76,7 +76,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Auth"
                 ],
                 "summary": "Request password reset",
                 "parameters": [
@@ -116,7 +116,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Auth"
                 ],
                 "summary": "Login user",
                 "parameters": [
@@ -164,7 +164,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Auth"
                 ],
                 "summary": "Get user profile",
                 "responses": {
@@ -196,7 +196,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Auth"
                 ],
                 "summary": "Update user profile",
                 "parameters": [
@@ -242,7 +242,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Auth"
                 ],
                 "summary": "Register a new user",
                 "parameters": [
@@ -288,7 +288,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Auth"
                 ],
                 "summary": "Reset password",
                 "parameters": [
@@ -330,7 +330,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "community"
+                    "Community"
                 ],
                 "summary": "Get community feed",
                 "parameters": [
@@ -373,7 +373,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "community"
+                    "Community"
                 ],
                 "summary": "Create a new post",
                 "parameters": [
@@ -422,7 +422,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "community"
+                    "Community"
                 ],
                 "summary": "Get post details",
                 "parameters": [
@@ -456,7 +456,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "community"
+                    "Community"
                 ],
                 "summary": "Add a comment",
                 "parameters": [
@@ -499,7 +499,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "community"
+                    "Community"
                 ],
                 "summary": "Like/Unlike a post",
                 "parameters": [
@@ -524,6 +524,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/dashboard/weather": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get real-time weather data for a given location using OpenWeatherMap",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get current weather",
+                "parameters": [
+                    {
+                        "type": "number",
+                        "description": "Latitude",
+                        "name": "lat",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "number",
+                        "description": "Longitude",
+                        "name": "long",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_dashboard.WeatherResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/diagnosis": {
             "post": {
                 "security": [
@@ -539,7 +598,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "diagnosis"
+                    "Diagnosis"
                 ],
                 "summary": "Diagnose Disease from Image",
                 "parameters": [
@@ -554,6 +613,18 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Symptoms Description",
                         "name": "description",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Latitude (Optional, prevents outbreak if missing)",
+                        "name": "latitude",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Longitude (Optional, prevents outbreak if missing)",
+                        "name": "longitude",
                         "in": "formData"
                     }
                 ],
@@ -597,7 +668,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "diagnosis"
+                    "Diagnosis"
                 ],
                 "summary": "Get Diagnosis History",
                 "responses": {
@@ -635,7 +706,7 @@ const docTemplate = `{
             "get": {
                 "description": "Get a list of all diseases in the library",
                 "tags": [
-                    "diseases"
+                    "Diseases"
                 ],
                 "summary": "List all diseases",
                 "parameters": [
@@ -676,7 +747,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "diseases"
+                    "Diseases"
                 ],
                 "summary": "Create a new disease",
                 "parameters": [
@@ -716,7 +787,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "diseases"
+                    "Diseases"
                 ],
                 "summary": "List disease categories",
                 "responses": {
@@ -748,7 +819,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "diseases"
+                    "Diseases"
                 ],
                 "summary": "Get disease details",
                 "parameters": [
@@ -787,7 +858,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "diseases"
+                    "Diseases"
                 ],
                 "summary": "Update disease details",
                 "parameters": [
@@ -827,6 +898,155 @@ const docTemplate = `{
                 }
             }
         },
+        "/notifications": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a paginated list of notifications for the authenticated user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get user notifications",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_notification.Notification"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/read-all": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Marks all unread notifications for the user as read.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark all notifications as read",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/unread-count": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves the total number of unread notifications.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get unread notification count",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/{id}/read": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Marks a specific notification as read.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark notification as read",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Notification ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/outbreaks": {
             "get": {
                 "security": [
@@ -839,7 +1059,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "outbreaks"
+                    "Outbreaks"
                 ],
                 "summary": "List active outbreaks",
                 "parameters": [
@@ -902,7 +1122,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "outbreaks"
+                    "Outbreaks"
                 ],
                 "summary": "Get outbreak details",
                 "parameters": [
@@ -945,6 +1165,135 @@ const docTemplate = `{
                 }
             }
         },
+        "/outbreaks/{id}/verify": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Allows an Expert to verify a reported outbreak",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Outbreaks"
+                ],
+                "summary": "Verify an outbreak",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Outbreak ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/notifications": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves the user's notification preferences.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Get notification settings",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_notification.NotificationSettings"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the user's notification preferences.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update notification settings",
+                "parameters": [
+                    {
+                        "description": "Settings Data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_notification.UpdateSettingsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_notification.NotificationSettings"
+                        }
+                    }
+                }
+            }
+        },
         "/upload": {
             "post": {
                 "description": "Upload an image file to Google Cloud Storage.",
@@ -955,7 +1304,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "platform"
+                    "Platform"
                 ],
                 "summary": "Upload a file",
                 "parameters": [
@@ -1277,7 +1626,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "is_liked": {
-                    "description": "Does current user like this?",
                     "type": "boolean"
                 },
                 "like_count": {
@@ -1288,6 +1636,29 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_dashboard.WeatherResponse": {
+            "type": "object",
+            "properties": {
+                "condition": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "humidity": {
+                    "type": "integer"
+                },
+                "icon_url": {
+                    "type": "string"
+                },
+                "location_name": {
+                    "type": "string"
+                },
+                "temperature": {
+                    "type": "number"
                 }
             }
         },
@@ -1404,6 +1775,79 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_notification.Notification": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_read": {
+                    "type": "boolean"
+                },
+                "reference_id": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "e.g., \"OUTBREAK_NEARBY\"",
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_notification.NotificationSettings": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "notify_nearby": {
+                    "type": "boolean"
+                },
+                "radius_km": {
+                    "type": "number"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_notification.UpdateSettingsRequest": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "notify_nearby": {
+                    "type": "boolean"
+                },
+                "radius_km": {
+                    "type": "number"
                 }
             }
         },

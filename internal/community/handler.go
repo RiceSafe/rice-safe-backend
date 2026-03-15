@@ -27,7 +27,7 @@ func RegisterRoutes(app fiber.Router, service Service) {
 // CreatePost godoc
 // @Summary      Create a new post
 // @Description  Create a community post with optional image
-// @Tags         community
+// @Tags         Community
 // @Accept       multipart/form-data
 // @Produce      json
 // @Security     BearerAuth
@@ -65,7 +65,7 @@ func (h *Handler) CreatePost(c *fiber.Ctx) error {
 // GetPosts godoc
 // @Summary      Get community feed
 // @Description  Get list of posts with pagination
-// @Tags         community
+// @Tags         Community
 // @Produce      json
 // @Security     BearerAuth
 // @Param        limit query int false "Limit"
@@ -95,7 +95,7 @@ func (h *Handler) GetPosts(c *fiber.Ctx) error {
 // GetPostByID godoc
 // @Summary      Get post details
 // @Description  Get a single post details
-// @Tags         community
+// @Tags         Community
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id path string true "Post ID"
@@ -136,7 +136,7 @@ func (h *Handler) GetPostByID(c *fiber.Ctx) error {
 // CreateComment godoc
 // @Summary      Add a comment
 // @Description  Add a comment to a post
-// @Tags         community
+// @Tags         Community
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id path string true "Post ID"
@@ -178,7 +178,7 @@ func (h *Handler) CreateComment(c *fiber.Ctx) error {
 // ToggleLike godoc
 // @Summary      Like/Unlike a post
 // @Description  Toggle like status for a post
-// @Tags         community
+// @Tags         Community
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id path string true "Post ID"

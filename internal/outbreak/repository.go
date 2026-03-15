@@ -11,6 +11,7 @@ type Repository interface {
 	Create(ctx context.Context, o *Outbreak) error
 	GetActiveOutbreaks(ctx context.Context, verifiedOnly bool) ([]*OutbreakResponse, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*OutbreakResponse, error)
+	VerifyOutbreak(ctx context.Context, outbreakID uuid.UUID, expertID uuid.UUID) error
 }
 
 type repository struct{}
@@ -95,4 +96,14 @@ func (r *repository) GetByID(ctx context.Context, id uuid.UUID) (*OutbreakRespon
 		return nil, err
 	}
 	return &o, nil
+}
+
+func (r *repository) VerifyOutbreak(ctx context.Context, outbreakID uuid.UUID, expertID uuid.UUID) error {
+	query := `
+		UPDATE outbreaks 
+		SET is_verified = TRUE, verified_by = $1, verified_at = NOW()
+		WHERE id = $2
+	`
+	_, err := database.DB.Exec(ctx, query, expertID, outbreakID)
+	return err
 }

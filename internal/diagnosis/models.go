@@ -11,8 +11,8 @@ type DiagnosisRequest struct {
 	Image       []byte
 	Filename    string
 	Description string
-	Latitude    float64
-	Longitude   float64
+	Latitude    *float64
+	Longitude   *float64
 }
 
 type DiagnosisResponse struct {
@@ -33,8 +33,8 @@ type DiagnosisHistory struct {
 	ImageURL   string     `json:"image_url"`
 	Confidence float64    `json:"confidence"`
 	Location   string     `json:"location"`
-	Latitude   float64    `json:"latitude"`
-	Longitude  float64    `json:"longitude"`
+	Latitude   *float64   `json:"latitude"`
+	Longitude  *float64   `json:"longitude"`
 	CreatedAt  time.Time  `json:"created_at"`
 }
 

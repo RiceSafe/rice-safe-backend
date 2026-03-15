@@ -27,11 +27,13 @@ func RegisterRoutes(router fiber.Router, service Service) {
 // Diagnose godoc
 // @Summary      Diagnose Disease from Image
 // @Description  Upload an image to get a disease prediction and details.
-// @Tags         diagnosis
+// @Tags         Diagnosis
 // @Accept       multipart/form-data
 // @Produce      json
 // @Param        image formData file true "Rice Leaf Image"
 // @Param        description formData string false "Symptoms Description"
+// @Param        latitude formData number false "Latitude (Optional, prevents outbreak if missing)"
+// @Param        longitude formData number false "Longitude (Optional, prevents outbreak if missing)"
 // @Success      200  {object}  DiagnosisResponse
 // @Failure      400  {object}  map[string]string
 // @Failure      500  {object}  map[string]string
@@ -66,25 +68,32 @@ func (h *Handler) Diagnose(c *fiber.Ctx) error {
 	}
 
 	// Call Service
-	// Get Latitude/Longitude from request headers or body if sent by mobile
-	// For now, defaulting to Bangkok
+	latStr := c.FormValue("latitude")
+	lonStr := c.FormValue("longitude")
+
+	var parsedLat, parsedLon *float64
+
+	if latStr != "" && lonStr != "" {
+		var l, lo float64
+		if val, err := fmt.Sscanf(latStr, "%f", &l); err == nil && val > 0 {
+			parsedLat = &l
+		} else {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid latitude format"})
+		}
+		
+		if val, err := fmt.Sscanf(lonStr, "%f", &lo); err == nil && val > 0 {
+			parsedLon = &lo
+		} else {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid longitude format"})
+		}
+	}
+
 	req := &DiagnosisRequest{
 		Image:       imageBytes,
 		Filename:    fileHeader.Filename,
 		Description: description,
-		Latitude:    13.7563,  // Default Bangkok Lat (Mock)
-		Longitude:   100.5018, // Default Bangkok Long (Mock)
-	}
-	// Try to parse lat/long if provided
-	if lat := c.FormValue("latitude"); lat != "" {
-		if val, err := fmt.Sscanf(lat, "%f", &req.Latitude); err != nil || val == 0 {
-			// Ignore error, keep default
-		}
-	}
-	if long := c.FormValue("longitude"); long != "" {
-		if val, err := fmt.Sscanf(long, "%f", &req.Longitude); err != nil || val == 0 {
-			// Ignore error, keep default
-		}
+		Latitude:    parsedLat,
+		Longitude:   parsedLon,
 	}
 
 	resp, err := h.service.Diagnose(c.Context(), userID, req)
@@ -98,7 +107,7 @@ func (h *Handler) Diagnose(c *fiber.Ctx) error {
 // GetHistory godoc
 // @Summary      Get Diagnosis History
 // @Description  Get a list of past diagnoses for the current user
-// @Tags         diagnosis
+// @Tags         Diagnosis
 // @Produce      json
 // @Security     BearerAuth
 // @Success      200  {array}   HistoryResponse

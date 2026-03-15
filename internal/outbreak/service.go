@@ -11,6 +11,7 @@ import (
 type Service interface {
 	GetActiveOutbreaks(ctx context.Context, verifiedOnly bool, userLat, userLon *float64) ([]*OutbreakResponse, error)
 	GetOutbreakByID(ctx context.Context, id uuid.UUID, userLat, userLon *float64) (*OutbreakResponse, error)
+	VerifyOutbreak(ctx context.Context, outbreakID uuid.UUID, expertID uuid.UUID) error
 }
 
 type service struct {
@@ -83,4 +84,8 @@ func haversine(lat1, lon1, lat2, lon2 float64) float64 {
 			math.Sin(dLon/2)*math.Sin(dLon/2)
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 	return R * c
+}
+
+func (s *service) VerifyOutbreak(ctx context.Context, outbreakID uuid.UUID, expertID uuid.UUID) error {
+	return s.repo.VerifyOutbreak(ctx, outbreakID, expertID)
 }

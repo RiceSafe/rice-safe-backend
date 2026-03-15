@@ -52,3 +52,26 @@ func Protected() fiber.Handler {
 		return c.Next()
 	}
 }
+
+// RequireRole checks if the user's role matches one of the allowed roles
+func RequireRole(allowedRoles ...string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		roleInter := c.Locals("role")
+		if roleInter == nil {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Role not found in token"})
+		}
+
+		role, ok := roleInter.(string)
+		if !ok {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Invalid role format"})
+		}
+
+		for _, allowed := range allowedRoles {
+			if role == allowed {
+				return c.Next()
+			}
+		}
+
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Insufficient permissions"})
+	}
+}

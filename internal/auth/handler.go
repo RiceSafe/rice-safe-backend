@@ -39,7 +39,7 @@ func RegisterRoutes(app *fiber.App, service Service) {
 // UpdateProfile godoc
 // @Summary      Update user profile
 // @Description  Update username and/or avatar.
-// @Tags         auth
+// @Tags         Auth
 // @Accept       multipart/form-data
 // @Produce      json
 // @Security     BearerAuth
@@ -74,7 +74,7 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 // Register godoc
 // @Summary Register a new user
 // @Description Register with username, email, password, and optional role
-// @Tags auth
+// @Tags         Auth
 // @Accept json
 // @Produce json
 // @Param request body RegisterRequest true "Register Payload"
@@ -107,7 +107,7 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 // GetProfile returns the current user's profile
 // @Summary Get user profile
 // @Description Get the profile of the currently logged-in user
-// @Tags auth
+// @Tags         Auth
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} User
@@ -131,7 +131,7 @@ func (h *Handler) GetProfile(c *fiber.Ctx) error {
 // ChangePassword handles password change
 // @Summary Change user password
 // @Description Change the password for the currently logged-in user
-// @Tags auth
+// @Tags         Auth
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -166,7 +166,7 @@ func (h *Handler) ChangePassword(c *fiber.Ctx) error {
 // ForgotPassword handles password reset request
 // @Summary Request password reset
 // @Description Request a password reset code via email
-// @Tags auth
+// @Tags         Auth
 // @Accept json
 // @Produce json
 // @Param request body ForgotPasswordRequest true "Forgot Password Payload"
@@ -193,7 +193,7 @@ func (h *Handler) ForgotPassword(c *fiber.Ctx) error {
 // ResetPassword handles password reset using token
 // @Summary Reset password
 // @Description Reset password using the code received via email
-// @Tags auth
+// @Tags         Auth
 // @Accept json
 // @Produce json
 // @Param request body ResetPasswordRequest true "Reset Password Payload"
@@ -220,7 +220,7 @@ func (h *Handler) ResetPassword(c *fiber.Ctx) error {
 // Login godoc
 // @Summary Login user
 // @Description Login with email and password
-// @Tags auth
+// @Tags         Auth
 // @Accept json
 // @Produce json
 // @Param request body LoginRequest true "Login Payload"
