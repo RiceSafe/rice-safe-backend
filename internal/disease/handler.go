@@ -1,6 +1,7 @@
 package disease
 
 import (
+	"github.com/RiceSafe/rice-safe-backend/internal/auth"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -13,15 +14,22 @@ func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
-func RegisterRoutes(app *fiber.App, service Service) {
+// RegisterRoutes registers disease routes.
+// Public read routes (GET) are open — no auth required.
+// Write routes (POST/PUT) require a valid JWT and EXPERT or ADMIN role.
+func RegisterRoutes(app *fiber.App, jwtSecret string, service Service) {
 	h := NewHandler(service)
-	group := app.Group("/api/diseases")
 
-	group.Get("/", h.GetDiseases)
-	group.Get("/categories", h.GetCategories)
-	group.Get("/:id", h.GetDiseaseByID)
-	group.Post("/", h.CreateDisease)
-	group.Put("/:id", h.UpdateDisease)
+	// Public: anyone can browse the disease library
+	publicGroup := app.Group("/api/diseases")
+	publicGroup.Get("/", h.GetDiseases)
+	publicGroup.Get("/categories", h.GetCategories)
+	publicGroup.Get("/:id", h.GetDiseaseByID)
+
+	// Protected: JWT-authenticated EXPERT or ADMIN only
+	writeGroup := app.Group("/api/diseases", auth.Protected(jwtSecret), auth.RequireRole("EXPERT", "ADMIN"))
+	writeGroup.Post("/", h.CreateDisease)
+	writeGroup.Put("/:id", h.UpdateDisease)
 }
 
 // GetCategories godoc
@@ -82,13 +90,15 @@ func (h *Handler) GetDiseaseByID(c *fiber.Ctx) error {
 
 // CreateDisease godoc
 // @Summary      Create a new disease
-// @Description  Create a new disease entry
+// @Description  Create a new disease entry (EXPERT or ADMIN only)
 // @Tags         Diseases
 // @Accept       json
 // @Produce      json
+// @Security     BearerAuth
 // @Param        disease body Disease true "Disease Data"
 // @Success      201  {object}  Disease
 // @Failure      400  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
 // @Router       /diseases [post]
 func (h *Handler) CreateDisease(c *fiber.Ctx) error {
 	var disease Disease
@@ -104,14 +114,16 @@ func (h *Handler) CreateDisease(c *fiber.Ctx) error {
 
 // UpdateDisease godoc
 // @Summary      Update disease details
-// @Description  Update details of an existing disease
+// @Description  Update details of an existing disease (EXPERT or ADMIN only)
 // @Tags         Diseases
 // @Accept       json
 // @Produce      json
+// @Security     BearerAuth
 // @Param        id   path      string  true  "Disease ID"
 // @Param        disease body Disease true "Updated Data"
 // @Success      200  {object}  Disease
 // @Failure      400  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
 // @Router       /diseases/{id} [put]
 func (h *Handler) UpdateDisease(c *fiber.Ctx) error {
 	idStr := c.Params("id")
