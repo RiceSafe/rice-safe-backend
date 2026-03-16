@@ -12,6 +12,7 @@ import (
 	"github.com/RiceSafe/rice-safe-backend/internal/notification"
 	"github.com/RiceSafe/rice-safe-backend/internal/outbreak"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/ai_client"
+	"github.com/RiceSafe/rice-safe-backend/internal/platform/email"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -28,11 +29,12 @@ func SetupApp(
 	storageService storage.Service,
 	aiClient ai_client.Client,
 	weatherClient dashboard.WeatherClient,
+	emailService email.Service,
 ) *fiber.App {
 
 	// Initialize Modules
 	authRepo := auth.NewRepository()
-	authService := auth.NewService(authRepo, cfg.JWTSecret, storageService)
+	authService := auth.NewService(authRepo, cfg.JWTSecret, storageService, emailService)
 	auth.NewHandler(authService)
 
 	diseaseRepo := disease.NewRepository()

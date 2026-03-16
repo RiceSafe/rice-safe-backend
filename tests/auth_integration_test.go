@@ -11,6 +11,7 @@ import (
 
 	"github.com/RiceSafe/rice-safe-backend/internal/auth"
 	"github.com/RiceSafe/rice-safe-backend/internal/config"
+	"github.com/RiceSafe/rice-safe-backend/internal/platform/email"
 	"github.com/RiceSafe/rice-safe-backend/internal/server"
 	"github.com/RiceSafe/rice-safe-backend/internal/testutil"
 	"github.com/stretchr/testify/assert"
@@ -33,7 +34,8 @@ func TestAuthIntegration(t *testing.T) {
 	}
 
 	// Mount the Fiber App
-	app := server.SetupApp(cfg, mockStorage, mockAI, nil)
+	mockEmail := &email.MockEmailService{}
+	app := server.SetupApp(cfg, mockStorage, mockAI, nil, mockEmail)
 
 	// --- TEST SUITE ENTRANCE ---
 
