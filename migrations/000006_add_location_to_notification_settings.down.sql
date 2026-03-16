@@ -1,2 +1,3 @@
-DROP TABLE IF EXISTS notifications;
-DROP TABLE IF EXISTS notification_settings;
+ALTER TABLE notification_settings 
+DROP COLUMN IF EXISTS latitude,
+DROP COLUMN IF EXISTS longitude;
