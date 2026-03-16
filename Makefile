@@ -1,4 +1,4 @@
-include .env
+-include .env
 export
 
 DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}?sslmode=disable
