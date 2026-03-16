@@ -16,6 +16,8 @@ type Config struct {
 	AIServiceURL       string
 	OpenWeatherMapKey  string
 	WeatherAPIURL      string
+	ResendAPIKey       string
+	ResendFromEmail    string
 }
 
 func LoadConfig() (*Config, error) {
@@ -32,6 +34,8 @@ func LoadConfig() (*Config, error) {
 		AIServiceURL:       getEnv("AI_SERVICE_URL", "http://localhost:8000"),
 		OpenWeatherMapKey:  getEnv("OPEN_WEATHER_MAP_KEY", ""),
 		WeatherAPIURL:      getEnv("WEATHER_API_URL", "https://api.openweathermap.org/data/2.5/weather"),
+		ResendAPIKey:       getEnv("RESEND_API_KEY", ""),
+		ResendFromEmail:    getEnv("RESEND_FROM_EMAIL", "noreply@ricesafe.app"),
 	}
 
 	// Validate required variables

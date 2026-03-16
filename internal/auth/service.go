@@ -2,11 +2,13 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
-	"log"
+	"fmt"
 	"mime/multipart"
 	"time"
 
+	"github.com/RiceSafe/rice-safe-backend/internal/platform/email"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/storage"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -27,10 +29,11 @@ type service struct {
 	repo      Repository
 	jwtSecret string
 	storage   storage.Service
+	email     email.Service
 }
 
-func NewService(repo Repository, jwtSecret string, storage storage.Service) Service {
-	return &service{repo: repo, jwtSecret: jwtSecret, storage: storage}
+func NewService(repo Repository, jwtSecret string, storage storage.Service, emailSvc email.Service) Service {
+	return &service{repo: repo, jwtSecret: jwtSecret, storage: storage, email: emailSvc}
 }
 
 func (s *service) Register(ctx context.Context, req *RegisterRequest) (*AuthResponse, error) {
@@ -127,18 +130,18 @@ func (s *service) ForgotPassword(ctx context.Context, req *ForgotPasswordRequest
 		return nil
 	}
 
-	// Generate a 6-digit code (Mock)
-	// In production, use crypto/rand
-	resetToken := "123456"
+	// Generate a cryptographically secure 6-digit OTP
+	resetToken, err := generateOTP()
+	if err != nil {
+		return err
+	}
 	expiry := time.Now().Add(15 * time.Minute)
 
 	if err := s.repo.SaveResetToken(ctx, user.Email, resetToken, expiry); err != nil {
 		return err
 	}
 
-	// Mock Email Sending
-	log.Printf("EMAIL SENT: To %s, Code: %s", user.Email, resetToken)
-	return nil
+	return s.email.SendPasswordReset(ctx, user.Email, resetToken)
 }
 
 // ResetPassword resets the user's password using the token
@@ -220,3 +223,15 @@ func (s *service) generateToken(user *User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(s.jwtSecret))
 }
+
+// generateOTP returns a cryptographically secure random 6-digit code (e.g. "047291").
+func generateOTP() (string, error) {
+	b := make([]byte, 4)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	// Convert to a number 0-999999 and zero-pad to 6 digits
+	n := (uint32(b[0])<<24 | uint32(b[1])<<16 | uint32(b[2])<<8 | uint32(b[3])) % 1_000_000
+	return fmt.Sprintf("%06d", n), nil
+}
+

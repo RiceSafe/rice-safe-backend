@@ -7,6 +7,7 @@ import (
 	"github.com/RiceSafe/rice-safe-backend/internal/dashboard"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/ai_client"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/database"
+	"github.com/RiceSafe/rice-safe-backend/internal/platform/email"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/storage"
 	"github.com/RiceSafe/rice-safe-backend/internal/server"
 	_ "github.com/RiceSafe/rice-safe-backend/docs"
@@ -39,8 +40,9 @@ func main() {
 
 	aiClient := ai_client.NewClient(cfg.AIServiceURL)
 	weatherClient := dashboard.NewWeatherClient(cfg.OpenWeatherMapKey, cfg.WeatherAPIURL)
+	emailService := email.NewResendService(cfg.ResendAPIKey, cfg.ResendFromEmail)
 
-	app := server.SetupApp(cfg, storageService, aiClient, weatherClient)
+	app := server.SetupApp(cfg, storageService, aiClient, weatherClient, emailService)
 
 	// Start Server
 	log.Fatal(app.Listen(":" + cfg.Port))
