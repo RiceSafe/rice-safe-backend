@@ -64,6 +64,18 @@ rice-safe-backend/
 └── README.md               # This file
 ```
 
+## Development Commands
+
+We use `make` to simplify development tasks.
+
+- `make dev`: Run the server locally with live-reloading using Air.
+- `make test`: Run the entire integration test suite using isolated Docker containers.
+- `make swagger`: Regenerate the Swagger API documentation.
+- `make docker-up`: Start the PostgreSQL database and AI mock via docker-compose.
+- `make docker-down`: Stop and remove the docker-compose containers.
+- `make migrate-up`: Apply all database migrations.
+- `make migrate-down`: Rollback the latest database migration.
+
 ## API Documentation
 
 Once the server is running, you can access the interactive API documentation at:

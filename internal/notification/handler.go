@@ -16,9 +16,9 @@ func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) RegisterRoutes(router fiber.Router) {
+func (h *Handler) RegisterRoutes(router fiber.Router, jwtSecret string) {
 	group := router.Group("/notifications")
-	group.Use(auth.Protected())
+	group.Use(auth.Protected(jwtSecret))
 
 	group.Get("/", h.GetNotifications)
 	group.Get("/unread-count", h.GetUnreadCount)
@@ -26,7 +26,7 @@ func (h *Handler) RegisterRoutes(router fiber.Router) {
 	group.Put("/read-all", h.MarkAllAsRead)
 
 	settings := router.Group("/settings/notifications")
-	settings.Use(auth.Protected())
+	settings.Use(auth.Protected(jwtSecret))
 	settings.Get("/", h.GetSettings)
 	settings.Put("/", h.UpdateSettings)
 }

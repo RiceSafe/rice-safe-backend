@@ -15,11 +15,11 @@ func NewHandler(weatherClient WeatherClient) *Handler {
 	}
 }
 
-func RegisterRoutes(router fiber.Router, weatherClient WeatherClient) {
+func RegisterRoutes(router fiber.Router, weatherClient WeatherClient, jwtSecret string) {
 	h := NewHandler(weatherClient)
 
 	group := router.Group("/dashboard")
-	group.Use(auth.Protected())
+	group.Use(auth.Protected(jwtSecret))
 	group.Get("/weather", h.GetWeather)
 }
 

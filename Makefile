@@ -1,4 +1,4 @@
-include .env
+-include .env
 export
 
 DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}?sslmode=disable
@@ -20,4 +20,13 @@ migrate-down:
 create-migration:
 	docker run --rm -v $(PWD)/migrations:/migrations migrate/migrate create -ext sql -dir /migrations -seq $(name)
 
-.PHONY: docker-up docker-down migrate-up migrate-down create-migration
+test:
+	go test -v ./tests/...
+
+dev:
+	air
+
+swagger:
+	swag init -g cmd/api/main.go --parseDependency --parseInternal
+
+.PHONY: docker-up docker-down migrate-up migrate-down create-migration test dev swagger
