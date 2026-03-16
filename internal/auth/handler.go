@@ -20,7 +20,7 @@ func NewHandler(service Service) *Handler {
 	}
 }
 
-func RegisterRoutes(app *fiber.App, service Service) {
+func RegisterRoutes(app *fiber.App, service Service, jwtSecret string) {
 	h := NewHandler(service)
 	group := app.Group("/api/auth")
 
@@ -31,9 +31,9 @@ func RegisterRoutes(app *fiber.App, service Service) {
 	group.Post("/reset-password", h.ResetPassword)
 
 	// Protected routes
-	group.Get("/me", Protected(), h.GetProfile)
-	group.Post("/change-password", Protected(), h.ChangePassword)
-	group.Put("/me", Protected(), h.UpdateProfile)
+	group.Get("/me", Protected(jwtSecret), h.GetProfile)
+	group.Post("/change-password", Protected(jwtSecret), h.ChangePassword)
+	group.Put("/me", Protected(jwtSecret), h.UpdateProfile)
 }
 
 // UpdateProfile godoc

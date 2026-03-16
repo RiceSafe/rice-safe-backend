@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"os"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,7 +9,7 @@ import (
 )
 
 // Protected verifies the JWT token in the Authorization header
-func Protected() fiber.Handler {
+func Protected(jwtSecret string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
@@ -24,9 +23,9 @@ func Protected() fiber.Handler {
 		}
 
 		tokenString := parts[1]
-		secret := os.Getenv("JWT_SECRET")
+		secret := jwtSecret
 		if secret == "" {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "JWT_SECRET is not set"})
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "JWT secret is not configured"})
 		}
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
