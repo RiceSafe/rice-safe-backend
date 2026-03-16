@@ -12,6 +12,7 @@ import (
 	"github.com/RiceSafe/rice-safe-backend/internal/auth"
 	"github.com/RiceSafe/rice-safe-backend/internal/config"
 	"github.com/RiceSafe/rice-safe-backend/internal/disease"
+	"github.com/RiceSafe/rice-safe-backend/internal/platform/email"
 	"github.com/RiceSafe/rice-safe-backend/internal/server"
 	"github.com/RiceSafe/rice-safe-backend/internal/testutil"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,8 @@ func TestDiseaseRouteGuard(t *testing.T) {
 	mockStorage := &testutil.MockStorageService{}
 	mockAI := &testutil.MockAIService{}
 	cfg := &config.Config{JWTSecret: "test-secret"}
-	app := server.SetupApp(cfg, mockStorage, mockAI, nil)
+	mockEmail := &email.MockEmailService{}
+	app := server.SetupApp(cfg, mockStorage, mockAI, nil, mockEmail)
 
 	err = db.TruncateAll(ctx)
 	require.NoError(t, err)
