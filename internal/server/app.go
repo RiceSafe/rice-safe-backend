@@ -64,7 +64,7 @@ func SetupApp(
 
 	// Public Routes
 	auth.RegisterRoutes(app, authService, cfg.JWTSecret)
-	disease.RegisterRoutes(app, diseaseService)
+	disease.RegisterRoutes(app, cfg.JWTSecret, diseaseService)
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
 	// Protected Routes
@@ -79,7 +79,7 @@ func SetupApp(
 	community.RegisterRoutes(api, communityService)
 	// Register Notification Routes
 	notificationHandler.RegisterRoutes(api, cfg.JWTSecret)
-	
+
 	// Weather client is optional in some tests
 	if weatherClient != nil {
 		dashboard.RegisterRoutes(api, weatherClient, cfg.JWTSecret)
