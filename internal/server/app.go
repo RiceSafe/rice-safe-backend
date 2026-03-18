@@ -82,6 +82,10 @@ func SetupApp(
 	// Register Notification Routes
 	notificationHandler.RegisterRoutes(api, cfg.JWTSecret)
 
+	// Register Upload Route (Authenticated)
+	storageHandler := storage.NewHandler(storageService)
+	api.Post("/upload", storageHandler.UploadFile)
+
 	// Weather client is optional in some tests
 	if weatherClient != nil {
 		dashboard.RegisterRoutes(api, weatherClient, cfg.JWTSecret)
