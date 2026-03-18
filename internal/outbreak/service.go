@@ -12,6 +12,9 @@ type Service interface {
 	GetActiveOutbreaks(ctx context.Context, verifiedOnly bool, userLat, userLon *float64) ([]*OutbreakResponse, error)
 	GetOutbreakByID(ctx context.Context, id uuid.UUID, userLat, userLon *float64) (*OutbreakResponse, error)
 	VerifyOutbreak(ctx context.Context, outbreakID uuid.UUID, expertID uuid.UUID) error
+	GetAllOutbreaks(ctx context.Context) ([]*OutbreakResponse, error)
+	DeleteOutbreak(ctx context.Context, id uuid.UUID) error
+	ResolveOutbreak(ctx context.Context, outbreakID uuid.UUID, expertID uuid.UUID) error
 }
 
 type service struct {
@@ -88,4 +91,29 @@ func haversine(lat1, lon1, lat2, lon2 float64) float64 {
 
 func (s *service) VerifyOutbreak(ctx context.Context, outbreakID uuid.UUID, expertID uuid.UUID) error {
 	return s.repo.VerifyOutbreak(ctx, outbreakID, expertID)
+}
+
+func (s *service) GetAllOutbreaks(ctx context.Context) ([]*OutbreakResponse, error) {
+	outbreaks, err := s.repo.GetAllOutbreaks(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, o := range outbreaks {
+		if o.ImageURL != "" {
+			signedURL, _ := s.storage.GetFileUrl(o.ImageURL)
+			if signedURL != "" {
+				o.ImageURL = signedURL
+			}
+		}
+	}
+	return outbreaks, nil
+}
+
+func (s *service) DeleteOutbreak(ctx context.Context, id uuid.UUID) error {
+	return s.repo.DeleteOutbreak(ctx, id)
+}
+
+func (s *service) ResolveOutbreak(ctx context.Context, outbreakID uuid.UUID, expertID uuid.UUID) error {
+	return s.repo.ResolveOutbreak(ctx, outbreakID, expertID)
 }

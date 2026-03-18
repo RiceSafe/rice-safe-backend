@@ -23,6 +23,8 @@ type Service interface {
 	ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) error
 	ResetPassword(ctx context.Context, req *ResetPasswordRequest) error
 	UpdateProfile(ctx context.Context, userID uuid.UUID, username string, avatar *multipart.FileHeader) (*User, error)
+	ListUsers(ctx context.Context, role string) ([]*UserListItem, error)
+	UpdateUserRole(ctx context.Context, userID uuid.UUID, role string) error
 }
 
 type service struct {
@@ -163,6 +165,28 @@ func (s *service) ResetPassword(ctx context.Context, req *ResetPasswordRequest) 
 	return s.repo.ClearResetToken(ctx, user.ID)
 }
 
+// Admin Methods
+
+var allowedRoles = map[string]bool{
+	"FARMER": true,
+	"EXPERT": true,
+	"ADMIN":  true,
+}
+
+func (s *service) ListUsers(ctx context.Context, role string) ([]*UserListItem, error) {
+	if role != "" && !allowedRoles[role] {
+		return nil, errors.New("invalid role filter")
+	}
+	return s.repo.ListUsers(ctx, role)
+}
+
+func (s *service) UpdateUserRole(ctx context.Context, userID uuid.UUID, role string) error {
+	if !allowedRoles[role] {
+		return errors.New("invalid role: must be FARMER, EXPERT, or ADMIN")
+	}
+	return s.repo.UpdateUserRole(ctx, userID, role)
+}
+
 // Helper Functions
 
 func (s *service) UpdateProfile(ctx context.Context, userID uuid.UUID, username string, avatar *multipart.FileHeader) (*User, error) {
@@ -234,4 +258,3 @@ func generateOTP() (string, error) {
 	n := (uint32(b[0])<<24 | uint32(b[1])<<16 | uint32(b[2])<<8 | uint32(b[3])) % 1_000_000
 	return fmt.Sprintf("%06d", n), nil
 }
-

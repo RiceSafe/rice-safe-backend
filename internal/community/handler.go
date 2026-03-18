@@ -1,6 +1,7 @@
 package community
 
 import (
+	"github.com/RiceSafe/rice-safe-backend/internal/auth"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -22,6 +23,9 @@ func RegisterRoutes(app fiber.Router, service Service) {
 	group.Get("/posts/:id", h.GetPostByID)
 	group.Post("/posts/:id/comments", h.CreateComment)
 	group.Post("/posts/:id/like", h.ToggleLike)
+
+	// Admin operations
+	group.Delete("/posts/:id", auth.RequireRole("ADMIN"), h.DeletePost)
 }
 
 // CreatePost godoc
@@ -206,4 +210,28 @@ func (h *Handler) ToggleLike(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"liked": liked})
+}
+
+// DeletePost godoc
+// @Summary      Delete a community post
+// @Description  Remove a community post for moderation purposes (ADMIN only)
+// @Tags         Community
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path  string  true  "Post ID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Router       /community/posts/{id} [delete]
+func (h *Handler) DeletePost(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid post ID"})
+	}
+
+	if err := h.service.DeletePost(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "Post deleted successfully"})
 }

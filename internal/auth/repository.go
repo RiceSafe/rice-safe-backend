@@ -21,6 +21,10 @@ type Repository interface {
 	SaveResetToken(ctx context.Context, email string, token string, expiry time.Time) error
 	GetUserByResetToken(ctx context.Context, token string) (*User, error)
 	ClearResetToken(ctx context.Context, id uuid.UUID) error
+
+	// Admin Actions
+	ListUsers(ctx context.Context, role string) ([]*UserListItem, error)
+	UpdateUserRole(ctx context.Context, userID uuid.UUID, role string) error
 }
 
 type repository struct{}
@@ -130,6 +134,47 @@ func (r *repository) ClearResetToken(ctx context.Context, id uuid.UUID) error {
 	query := `UPDATE users SET reset_token = NULL, reset_token_expires_at = NULL WHERE id = $1`
 	_, err := database.DB.Exec(ctx, query, id)
 	return err
+}
+
+// ListUsers returns all users optionally filtered by role
+func (r *repository) ListUsers(ctx context.Context, role string) ([]*UserListItem, error) {
+	query := `SELECT id, username, email, role, avatar_url, created_at FROM users`
+	args := []any{}
+
+	if role != "" {
+		query += ` WHERE role = $1`
+		args = append(args, role)
+	}
+	query += ` ORDER BY created_at DESC`
+
+	rows, err := database.DB.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*UserListItem
+	for rows.Next() {
+		u := &UserListItem{}
+		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.Role, &u.AvatarURL, &u.CreatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	return users, nil
+}
+
+// UpdateUserRole changes a user's role
+func (r *repository) UpdateUserRole(ctx context.Context, userID uuid.UUID, role string) error {
+	query := `UPDATE users SET role = $1 WHERE id = $2`
+	tag, err := database.DB.Exec(ctx, query, role, userID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("user not found")
+	}
+	return nil
 }
 
 func scanUser(row pgx.Row) (*User, error) {
