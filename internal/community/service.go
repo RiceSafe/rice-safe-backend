@@ -15,6 +15,7 @@ type Service interface {
 	GetComments(ctx context.Context, postID uuid.UUID) ([]*CommentResponse, error)
 	CreateComment(ctx context.Context, userID, postID uuid.UUID, content string) (*Comment, error)
 	ToggleLike(ctx context.Context, userID, postID uuid.UUID) (bool, error)
+	DeletePost(ctx context.Context, id uuid.UUID) error
 }
 
 type service struct {
@@ -130,4 +131,8 @@ func (s *service) CreateComment(ctx context.Context, userID, postID uuid.UUID, c
 
 func (s *service) ToggleLike(ctx context.Context, userID, postID uuid.UUID) (bool, error) {
 	return s.repo.ToggleLike(ctx, postID, userID)
+}
+
+func (s *service) DeletePost(ctx context.Context, id uuid.UUID) error {
+	return s.repo.DeletePost(ctx, id)
 }

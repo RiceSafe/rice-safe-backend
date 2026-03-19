@@ -2,6 +2,7 @@ package outbreak
 
 import (
 	"context"
+	"errors"
 
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/database"
 	"github.com/google/uuid"
@@ -12,6 +13,10 @@ type Repository interface {
 	GetActiveOutbreaks(ctx context.Context, verifiedOnly bool) ([]*OutbreakResponse, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*OutbreakResponse, error)
 	VerifyOutbreak(ctx context.Context, outbreakID uuid.UUID, expertID uuid.UUID) error
+	// Admin/Expert Actions
+	GetAllOutbreaks(ctx context.Context) ([]*OutbreakResponse, error)
+	DeleteOutbreak(ctx context.Context, id uuid.UUID) error
+	ResolveOutbreak(ctx context.Context, outbreakID uuid.UUID, expertID uuid.UUID) error
 }
 
 type repository struct{}
@@ -106,4 +111,64 @@ func (r *repository) VerifyOutbreak(ctx context.Context, outbreakID uuid.UUID, e
 	`
 	_, err := database.DB.Exec(ctx, query, expertID, outbreakID)
 	return err
+}
+
+func (r *repository) GetAllOutbreaks(ctx context.Context) ([]*OutbreakResponse, error) {
+	query := `
+		SELECT
+			o.id, o.disease_id, d.name,
+			COALESCE(dh.image_url, d.image_url) as image_url,
+			o.latitude, o.longitude, o.is_active, o.is_verified,
+			o.created_at, o.updated_at
+		FROM outbreaks o
+		JOIN diseases d ON o.disease_id = d.id
+		LEFT JOIN diagnosis_history dh ON o.diagnosis_id = dh.id
+		ORDER BY o.created_at DESC
+	`
+	rows, err := database.DB.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var outbreaks []*OutbreakResponse
+	for rows.Next() {
+		var o OutbreakResponse
+		if err := rows.Scan(
+			&o.ID, &o.DiseaseID, &o.DiseaseName, &o.ImageURL,
+			&o.Latitude, &o.Longitude, &o.IsActive, &o.IsVerified,
+			&o.CreatedAt, &o.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		outbreaks = append(outbreaks, &o)
+	}
+	return outbreaks, nil
+}
+
+func (r *repository) DeleteOutbreak(ctx context.Context, id uuid.UUID) error {
+	tag, err := database.DB.Exec(ctx, `DELETE FROM outbreaks WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("outbreak not found")
+	}
+	return nil
+}
+
+func (r *repository) ResolveOutbreak(ctx context.Context, outbreakID uuid.UUID, expertID uuid.UUID) error {
+	query := `
+		UPDATE outbreaks 
+		SET is_active = FALSE, updated_at = NOW()
+		WHERE id = $1
+	`
+	tag, err := database.DB.Exec(ctx, query, outbreakID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("outbreak not found")
+	}
+	return nil
 }

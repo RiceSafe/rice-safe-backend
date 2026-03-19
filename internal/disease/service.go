@@ -86,5 +86,10 @@ func (s *service) UpdateDisease(ctx context.Context, id uuid.UUID, d *Disease) e
 		return err
 	}
 	d.ID = existing.ID
+
+	if len(d.ImageURL) > 4 && d.ImageURL[:4] == "http" {
+		d.ImageURL = existing.ImageURL
+	}
+
 	return s.repo.Update(ctx, d)
 }

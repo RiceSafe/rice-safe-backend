@@ -54,3 +54,18 @@ type AuthResponse struct {
 	Token string `json:"token"`
 	User  User   `json:"user"`
 }
+
+// UserListItem is returned by the list-users endpoint (Admin view)
+type UserListItem struct {
+	ID        uuid.UUID `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	AvatarURL string    `json:"avatar_url"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// UpdateRoleRequest is the payload for changing a user's role
+type UpdateRoleRequest struct {
+	Role string `json:"role" validate:"required,oneof=FARMER EXPERT ADMIN"`
+}

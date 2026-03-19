@@ -20,7 +20,9 @@ func RegisterRoutes(app fiber.Router, service Service) {
 
 	group.Get("/", h.GetOutbreaks)
 	group.Get("/:id", h.GetOutbreakByID)
-	group.Post("/:id/verify", auth.RequireRole("EXPERT", "ADMIN"), h.VerifyOutbreak)
+	group.Delete("/:id", auth.RequireRole("EXPERT", "ADMIN"), h.DeleteOutbreak)
+	group.Post("/:id/verify", auth.RequireRole("EXPERT"), h.VerifyOutbreak)
+	group.Post("/:id/resolve", auth.RequireRole("EXPERT"), h.ResolveOutbreak)
 }
 
 // GetOutbreakByID godoc
@@ -58,12 +60,12 @@ func (h *Handler) GetOutbreakByID(c *fiber.Ctx) error {
 }
 
 // GetOutbreaks godoc
-// @Summary      List active outbreaks
-// @Description  Get a list of all active disease outbreaks for the map
+// @Summary      List outbreaks
+// @Description  Get outbreaks. For admins/experts, returns ALL outbreaks. For farmers, returns active outbreaks.
 // @Tags         Outbreaks
 // @Produce      json
 // @Security     BearerAuth
-// @Param        verified   query     boolean false "Filter only verified outbreaks"
+// @Param        verified   query     boolean false "Filter only verified outbreaks (Farmer only)"
 // @Param        lat        query     number  false "User Latitude for distance"
 // @Param        long       query     number  false "User Longitude for distance"
 // @Param        limit      query     int     false "Limit number of results"
@@ -71,6 +73,21 @@ func (h *Handler) GetOutbreakByID(c *fiber.Ctx) error {
 // @Failure      500  {object}  map[string]string
 // @Router       /outbreaks [get]
 func (h *Handler) GetOutbreaks(c *fiber.Ctx) error {
+	roleStr, roleOk := c.Locals("role").(string)
+
+	if roleOk && (roleStr == "ADMIN" || roleStr == "EXPERT") {
+		// Admin/Expert get the full list (including unverified and inactive)
+		outbreaks, err := h.service.GetAllOutbreaks(c.Context())
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch outbreaks"})
+		}
+		if outbreaks == nil {
+			outbreaks = []*OutbreakResponse{}
+		}
+		return c.JSON(outbreaks)
+	}
+
+	// Normal User / Farmer logic
 	verified := c.QueryBool("verified", false)
 	lat := c.QueryFloat("lat", 0)
 	lon := c.QueryFloat("long", 0)
@@ -127,4 +144,60 @@ func (h *Handler) VerifyOutbreak(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"message": "Outbreak successfully verified"})
+}
+
+// GetAllOutbreaks removed (logic merged into GetOutbreaks)
+
+// DeleteOutbreak godoc
+// @Summary      Delete an outbreak
+// @Description  Delete an outbreak report (Admin/Expert only)
+// @Tags         Outbreaks
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path  string  true  "Outbreak ID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /outbreaks/{id} [delete]
+func (h *Handler) DeleteOutbreak(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid outbreak ID"})
+	}
+
+	if err := h.service.DeleteOutbreak(c.Context(), id); err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "Outbreak deleted successfully"})
+}
+
+// ResolveOutbreak godoc
+// @Summary      Resolve an outbreak
+// @Description  Mark an active outbreak as safely resolved (Expert only)
+// @Tags         Outbreaks
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path  string  true  "Outbreak ID"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /outbreaks/{id}/resolve [post]
+func (h *Handler) ResolveOutbreak(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	outbreakID, err := uuid.Parse(idStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid outbreak ID"})
+	}
+
+	userIDStr := c.Locals("user_id").(string)
+	expertID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user ID"})
+	}
+
+	if err := h.service.ResolveOutbreak(c.Context(), outbreakID, expertID); err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "Outbreak marked as resolved"})
 }

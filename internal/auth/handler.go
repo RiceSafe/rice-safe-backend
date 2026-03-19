@@ -34,6 +34,11 @@ func RegisterRoutes(app *fiber.App, service Service, jwtSecret string) {
 	group.Get("/me", Protected(jwtSecret), h.GetProfile)
 	group.Post("/change-password", Protected(jwtSecret), h.ChangePassword)
 	group.Put("/me", Protected(jwtSecret), h.UpdateProfile)
+
+	// Admin User Management Routes (/api/users)
+	usersGroup := app.Group("/api/users", Protected(jwtSecret), RequireRole("ADMIN"))
+	usersGroup.Get("/", h.ListUsers)
+	usersGroup.Put("/:id/role", h.UpdateUserRole)
 }
 
 // UpdateProfile godoc
@@ -247,6 +252,63 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(res)
+}
+
+// ListUsers godoc
+// @Summary      List all users
+// @Description  Get a list of all registered users, optionally filtered by role (ADMIN only)
+// @Tags         Users
+// @Produce      json
+// @Security     BearerAuth
+// @Param        role  query  string  false  "Filter by role (FARMER, EXPERT, ADMIN)"
+// @Success      200   {array}   UserListItem
+// @Failure      403   {object}  map[string]string
+// @Router       /users [get]
+func (h *Handler) ListUsers(c *fiber.Ctx) error {
+	role := c.Query("role")
+	users, err := h.service.ListUsers(c.Context(), role)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	if users == nil {
+		users = []*UserListItem{}
+	}
+	return c.JSON(users)
+}
+
+// UpdateUserRole godoc
+// @Summary      Update user role
+// @Description  Change a user's role (e.g. promote to EXPERT or ADMIN) (ADMIN only)
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path  string           true  "User ID"
+// @Param        body  body  UpdateRoleRequest true  "New role"
+// @Success      200  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Router       /users/{id}/role [put]
+func (h *Handler) UpdateUserRole(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid user ID"})
+	}
+
+	var req UpdateRoleRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	if err := h.validate.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Validation failed", "details": formatValidationErrors(err)})
+	}
+
+	if err := h.service.UpdateUserRole(c.Context(), id, req.Role); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "User role updated successfully"})
 }
 
 func formatValidationErrors(err error) map[string]string {

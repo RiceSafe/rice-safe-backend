@@ -2,6 +2,7 @@ package community
 
 import (
 	"context"
+	"errors"
 
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/database"
 	"github.com/google/uuid"
@@ -14,6 +15,7 @@ type Repository interface {
 	GetComments(ctx context.Context, postID uuid.UUID) ([]*CommentResponse, error)
 	CreateComment(ctx context.Context, comment *Comment) error
 	ToggleLike(ctx context.Context, postID, userID uuid.UUID) (bool, error)
+	DeletePost(ctx context.Context, id uuid.UUID) error
 }
 
 type repository struct{}
@@ -158,4 +160,15 @@ func (r *repository) ToggleLike(ctx context.Context, postID, userID uuid.UUID) (
 		_, err := database.DB.Exec(ctx, insertQuery, postID, userID)
 		return true, err
 	}
+}
+
+func (r *repository) DeletePost(ctx context.Context, id uuid.UUID) error {
+	tag, err := database.DB.Exec(ctx, `DELETE FROM posts WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("post not found")
+	}
+	return nil
 }
