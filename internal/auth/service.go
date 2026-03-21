@@ -3,9 +3,13 @@ package auth
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"mime/multipart"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/email"
@@ -23,19 +27,29 @@ type Service interface {
 	ForgotPassword(ctx context.Context, req *ForgotPasswordRequest) error
 	ResetPassword(ctx context.Context, req *ResetPasswordRequest) error
 	UpdateProfile(ctx context.Context, userID uuid.UUID, username string, avatar *multipart.FileHeader) (*User, error)
+	OAuthLogin(ctx context.Context, req *OAuthRequest) (*AuthResponse, error)
 	ListUsers(ctx context.Context, role string) ([]*UserListItem, error)
 	UpdateUserRole(ctx context.Context, userID uuid.UUID, role string) error
 }
 
 type service struct {
-	repo      Repository
-	jwtSecret string
-	storage   storage.Service
-	email     email.Service
+	repo            Repository
+	jwtSecret       string
+	storage         storage.Service
+	email           email.Service
+	googleClientIDs []string // iOS + Android client IDs for token verification
+	lineChannelID   string
 }
 
-func NewService(repo Repository, jwtSecret string, storage storage.Service, emailSvc email.Service) Service {
-	return &service{repo: repo, jwtSecret: jwtSecret, storage: storage, email: emailSvc}
+func NewService(repo Repository, jwtSecret string, storage storage.Service, emailSvc email.Service, googleClientIDs []string, lineChannelID string) Service {
+	return &service{
+		repo:            repo,
+		jwtSecret:       jwtSecret,
+		storage:         storage,
+		email:           emailSvc,
+		googleClientIDs: googleClientIDs,
+		lineChannelID:   lineChannelID,
+	}
 }
 
 func (s *service) Register(ctx context.Context, req *RegisterRequest) (*AuthResponse, error) {
@@ -46,8 +60,8 @@ func (s *service) Register(ctx context.Context, req *RegisterRequest) (*AuthResp
 
 	user := &User{
 		Username:     req.Username,
-		Email:        req.Email,
-		PasswordHash: hashedPwd,
+		Email:        &req.Email,
+		PasswordHash: &hashedPwd,
 		Role:         req.Role,
 	}
 
@@ -60,10 +74,7 @@ func (s *service) Register(ctx context.Context, req *RegisterRequest) (*AuthResp
 		return nil, err
 	}
 
-	return &AuthResponse{
-		Token: token,
-		User:  *user,
-	}, nil
+	return &AuthResponse{Token: token, User: *user}, nil
 }
 
 func (s *service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, error) {
@@ -72,7 +83,12 @@ func (s *service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 		return nil, errors.New("invalid email or password")
 	}
 
-	if err := checkPassword(req.Password, user.PasswordHash); err != nil {
+	// OAuth-only accounts have no password
+	if user.PasswordHash == nil {
+		return nil, errors.New("invalid email or password")
+	}
+
+	if err := checkPassword(req.Password, *user.PasswordHash); err != nil {
 		return nil, errors.New("invalid email or password")
 	}
 
@@ -81,10 +97,7 @@ func (s *service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 		return nil, err
 	}
 
-	return &AuthResponse{
-		Token: token,
-		User:  *user,
-	}, nil
+	return &AuthResponse{Token: token, User: *user}, nil
 }
 
 // GetProfile returns the user profile
@@ -95,10 +108,10 @@ func (s *service) GetProfile(ctx context.Context, userID uuid.UUID) (*User, erro
 	}
 
 	// Convert stored Avatar Path to Signed URL
-	if user.AvatarURL != "" {
-		signedURL, err := s.storage.GetFileUrl(user.AvatarURL)
+	if user.AvatarURL != nil && *user.AvatarURL != "" {
+		signedURL, err := s.storage.GetFileUrl(*user.AvatarURL)
 		if err == nil {
-			user.AvatarURL = signedURL
+			user.AvatarURL = &signedURL
 		}
 	}
 
@@ -112,7 +125,12 @@ func (s *service) ChangePassword(ctx context.Context, userID uuid.UUID, req *Cha
 		return err
 	}
 
-	if err := checkPassword(req.OldPassword, user.PasswordHash); err != nil {
+	// OAuth-only accounts have no password to change
+	if user.PasswordHash == nil {
+		return errors.New("บัญชีนี้ใช้การเข้าสู่ระบบผ่าน Google หรือ LINE ไม่สามารถเปลี่ยนรหัสผ่านได้")
+	}
+
+	if err := checkPassword(req.OldPassword, *user.PasswordHash); err != nil {
 		return errors.New("invalid old password")
 	}
 
@@ -132,6 +150,11 @@ func (s *service) ForgotPassword(ctx context.Context, req *ForgotPasswordRequest
 		return nil
 	}
 
+	// OAuth-only accounts have no password to reset
+	if user.PasswordHash == nil {
+		return errors.New("บัญชีนี้ใช้การเข้าสู่ระบบผ่าน Google หรือ LINE ไม่สามารถรีเซ็ตรหัสผ่านได้")
+	}
+
 	// Generate a cryptographically secure 6-digit OTP
 	resetToken, err := generateOTP()
 	if err != nil {
@@ -139,11 +162,11 @@ func (s *service) ForgotPassword(ctx context.Context, req *ForgotPasswordRequest
 	}
 	expiry := time.Now().Add(15 * time.Minute)
 
-	if err := s.repo.SaveResetToken(ctx, user.Email, resetToken, expiry); err != nil {
+	if err := s.repo.SaveResetToken(ctx, req.Email, resetToken, expiry); err != nil {
 		return err
 	}
 
-	return s.email.SendPasswordReset(ctx, user.Email, resetToken)
+	return s.email.SendPasswordReset(ctx, req.Email, resetToken)
 }
 
 // ResetPassword resets the user's password using the token
@@ -163,6 +186,157 @@ func (s *service) ResetPassword(ctx context.Context, req *ResetPasswordRequest) 
 	}
 
 	return s.repo.ClearResetToken(ctx, user.ID)
+}
+
+// OAuthLogin handles social login via Google or LINE.
+// It verifies the id_token with the provider, then finds or creates a user.
+func (s *service) OAuthLogin(ctx context.Context, req *OAuthRequest) (*AuthResponse, error) {
+	info, err := s.verifyOAuthToken(req.Provider, req.IDToken)
+	if err != nil {
+		return nil, fmt.Errorf("invalid %s token: %w", req.Provider, err)
+	}
+
+	// Try to find existing user by provider identity
+	user, err := s.repo.GetUserByProviderID(ctx, req.Provider, info.ProviderUID)
+	if err == nil {
+		// Existing OAuth user — return JWT
+		token, err := s.generateToken(user)
+		if err != nil {
+			return nil, err
+		}
+		return &AuthResponse{Token: token, User: *user}, nil
+	}
+
+	// New user — create account and identity
+	newUser := &User{
+		Username:  info.Name,
+		Email:     nil, // We keep email NULL for OAuth users to allow separate accounts & reduce security risks
+		AvatarURL: &info.Picture,
+		Role:      "FARMER",
+	}
+
+	if info.Picture == "" {
+		newUser.AvatarURL = nil
+	}
+
+	if err := s.repo.CreateUser(ctx, newUser); err != nil {
+		return nil, err
+	}
+
+	if err := s.repo.CreateUserIdentity(ctx, newUser.ID, req.Provider, info.ProviderUID); err != nil {
+		return nil, err
+	}
+
+	token, err := s.generateToken(newUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AuthResponse{Token: token, User: *newUser}, nil
+}
+
+// oauthUserInfo holds the normalized info extracted from a provider token
+type oauthUserInfo struct {
+	ProviderUID string
+	Name        string
+	Email       *string // nil if not provided
+	Picture     string
+}
+
+// verifyOAuthToken verifies an id_token with the given provider and returns normalized user info
+func (s *service) verifyOAuthToken(provider, idToken string) (*oauthUserInfo, error) {
+	switch provider {
+	case "google":
+		return s.verifyGoogleToken(idToken)
+	case "line":
+		return s.verifyLINEToken(idToken)
+	default:
+		return nil, errors.New("unsupported provider")
+	}
+}
+
+// verifyGoogleToken validates a Google id_token using Google's tokeninfo endpoint
+func (s *service) verifyGoogleToken(idToken string) (*oauthUserInfo, error) {
+	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("invalid Google token")
+	}
+
+	var payload struct {
+		Sub     string `json:"sub"`
+		Name    string `json:"name"`
+		Email   string `json:"email"`
+		Picture string `json:"picture"`
+		Aud     string `json:"aud"`
+	}
+	body, _ := io.ReadAll(resp.Body)
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return nil, err
+	}
+
+	// Verify audience — token must be issued for one of our registered client IDs
+	validAudience := false
+	for _, clientID := range s.googleClientIDs {
+		if payload.Aud == clientID {
+			validAudience = true
+			break
+		}
+	}
+	if !validAudience {
+		return nil, errors.New("Google token audience mismatch")
+	}
+
+	info := &oauthUserInfo{
+		ProviderUID: payload.Sub,
+		Name:        payload.Name,
+		Picture:     payload.Picture,
+	}
+	if payload.Email != "" {
+		info.Email = &payload.Email
+	}
+
+	return info, nil
+}
+
+// verifyLINEToken validates a LINE id_token using LINE's verify endpoint
+func (s *service) verifyLINEToken(idToken string) (*oauthUserInfo, error) {
+	body := strings.NewReader("id_token=" + idToken + "&client_id=" + s.lineChannelID)
+	resp, err := http.Post("https://api.line.me/oauth2/v2.1/verify", "application/x-www-form-urlencoded", body)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("invalid LINE token")
+	}
+
+	var payload struct {
+		Sub     string `json:"sub"`
+		Name    string `json:"name"`
+		Email   string `json:"email"`
+		Picture string `json:"picture"`
+	}
+	respBody, _ := io.ReadAll(resp.Body)
+	if err := json.Unmarshal(respBody, &payload); err != nil {
+		return nil, err
+	}
+
+	info := &oauthUserInfo{
+		ProviderUID: payload.Sub,
+		Name:        payload.Name,
+		Picture:     payload.Picture,
+	}
+	if payload.Email != "" {
+		info.Email = &payload.Email
+	}
+
+	return info, nil
 }
 
 // Admin Methods
@@ -206,7 +380,7 @@ func (s *service) UpdateProfile(ctx context.Context, userID uuid.UUID, username 
 		if err != nil {
 			return nil, err
 		}
-		user.AvatarURL = filename // Store key/path in DB
+		user.AvatarURL = &filename
 	}
 
 	if err := s.repo.UpdateUser(ctx, user); err != nil {
@@ -214,10 +388,10 @@ func (s *service) UpdateProfile(ctx context.Context, userID uuid.UUID, username 
 	}
 
 	// Generate signed URL for response
-	if user.AvatarURL != "" {
-		signedURL, err := s.storage.GetFileUrl(user.AvatarURL)
+	if user.AvatarURL != nil && *user.AvatarURL != "" {
+		signedURL, err := s.storage.GetFileUrl(*user.AvatarURL)
 		if err == nil {
-			user.AvatarURL = signedURL
+			user.AvatarURL = &signedURL
 		}
 	}
 

@@ -27,6 +27,7 @@ func RegisterRoutes(app *fiber.App, service Service, jwtSecret string) {
 	// Public routes
 	group.Post("/register", h.Register)
 	group.Post("/login", h.Login)
+	group.Post("/oauth", h.OAuthLogin) // Social Login
 	group.Post("/forgot-password", h.ForgotPassword)
 	group.Post("/reset-password", h.ResetPassword)
 
@@ -321,4 +322,33 @@ func formatValidationErrors(err error) map[string]string {
 		errors["internal"] = err.Error()
 	}
 	return errors
+}
+
+// OAuthLogin godoc
+// @Summary      Login with Google or LINE
+// @Description  Verifies social id_token and returns JWT. Creates user if they don't exist.
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request body OAuthRequest true "OAuth payload"
+// @Success      200 {object} AuthResponse
+// @Failure      400 {object} map[string]string
+// @Failure      401 {object} map[string]string
+// @Router       /auth/oauth [post]
+func (h *Handler) OAuthLogin(c *fiber.Ctx) error {
+var req OAuthRequest
+if err := c.BodyParser(&req); err != nil {
+return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse JSON"})
+}
+
+if err := h.validate.Struct(req); err != nil {
+return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+}
+
+response, err := h.service.OAuthLogin(c.Context(), &req)
+if err != nil {
+return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
+}
+
+return c.JSON(response)
 }
