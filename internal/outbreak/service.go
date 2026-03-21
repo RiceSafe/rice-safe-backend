@@ -37,10 +37,10 @@ func (s *service) GetActiveOutbreaks(ctx context.Context, verifiedOnly bool, use
 
 	for _, o := range outbreaks {
 		// Sign Image URLs
-		if o.ImageURL != "" {
-			signedURL, _ := s.storage.GetFileUrl(o.ImageURL)
+		if o.ImageURL != nil && *o.ImageURL != "" {
+			signedURL, _ := s.storage.GetFileUrl(*o.ImageURL)
 			if signedURL != "" {
-				o.ImageURL = signedURL
+				o.ImageURL = &signedURL
 			}
 		}
 
@@ -61,10 +61,10 @@ func (s *service) GetOutbreakByID(ctx context.Context, id uuid.UUID, userLat, us
 	}
 
 	// Sign Image URL
-	if o.ImageURL != "" {
-		signedURL, _ := s.storage.GetFileUrl(o.ImageURL)
+	if o.ImageURL != nil && *o.ImageURL != "" {
+		signedURL, _ := s.storage.GetFileUrl(*o.ImageURL)
 		if signedURL != "" {
-			o.ImageURL = signedURL
+			o.ImageURL = &signedURL
 		}
 	}
 
@@ -100,10 +100,10 @@ func (s *service) GetAllOutbreaks(ctx context.Context) ([]*OutbreakResponse, err
 	}
 
 	for _, o := range outbreaks {
-		if o.ImageURL != "" {
-			signedURL, _ := s.storage.GetFileUrl(o.ImageURL)
+		if o.ImageURL != nil && *o.ImageURL != "" {
+			signedURL, _ := s.storage.GetFileUrl(*o.ImageURL)
 			if signedURL != "" {
-				o.ImageURL = signedURL
+				o.ImageURL = &signedURL
 			}
 		}
 	}

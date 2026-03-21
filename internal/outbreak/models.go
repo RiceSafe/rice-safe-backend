@@ -26,7 +26,7 @@ type OutbreakResponse struct {
 	ID          uuid.UUID `json:"id"`
 	DiseaseID   uuid.UUID `json:"disease_id"`
 	DiseaseName string    `json:"disease_name"`
-	ImageURL    string    `json:"image_url"`
+	ImageURL    *string   `json:"image_url"`
 	Latitude    float64   `json:"latitude"`
 	Longitude   float64   `json:"longitude"`
 	Distance    *float64  `json:"distance"`

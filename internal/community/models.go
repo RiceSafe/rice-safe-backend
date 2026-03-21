@@ -10,7 +10,7 @@ type Post struct {
 	ID        uuid.UUID `json:"id"`
 	UserID    uuid.UUID `json:"user_id"`
 	Content   string    `json:"content"`
-	ImageURL  string    `json:"image_url"`
+	ImageURL  *string   `json:"image_url"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -40,9 +40,9 @@ type PostResponse struct {
 	ID           uuid.UUID `json:"id"`
 	UserID       uuid.UUID `json:"user_id"`
 	AuthorName   string    `json:"author_name"`
-	AuthorAvatar string    `json:"author_avatar"`
+	AuthorAvatar *string   `json:"author_avatar"`
 	Content      string    `json:"content"`
-	ImageURL     string    `json:"image_url"`
+	ImageURL     *string   `json:"image_url"`
 	LikeCount    int       `json:"like_count"`
 	CommentCount int       `json:"comment_count"`
 	IsLiked      bool      `json:"is_liked"`
@@ -56,7 +56,7 @@ type CommentResponse struct {
 	PostID       uuid.UUID `json:"post_id"`
 	UserID       uuid.UUID `json:"user_id"`
 	AuthorName   string    `json:"author_name"`
-	AuthorAvatar string    `json:"author_avatar"`
+	AuthorAvatar *string   `json:"author_avatar"`
 	Content      string    `json:"content"`
 	CreatedAt    time.Time `json:"created_at"`
 }

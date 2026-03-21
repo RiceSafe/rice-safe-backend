@@ -32,10 +32,10 @@ func (s *service) GetDiseases(ctx context.Context, category string) ([]Disease, 
 	}
 	// Sign URLs
 	for i := range diseases {
-		if diseases[i].ImageURL != "" {
-			url, err := s.storage.GetFileUrl(diseases[i].ImageURL)
+		if diseases[i].ImageURL != nil && *diseases[i].ImageURL != "" {
+			url, err := s.storage.GetFileUrl(*diseases[i].ImageURL)
 			if err == nil {
-				diseases[i].ImageURL = url
+				diseases[i].ImageURL = &url
 			}
 		}
 	}
@@ -52,10 +52,10 @@ func (s *service) GetByAlias(ctx context.Context, alias string) (*Disease, error
 		return nil, err
 	}
 	// Sign URL
-	if d.ImageURL != "" {
-		url, err := s.storage.GetFileUrl(d.ImageURL)
+	if d.ImageURL != nil && *d.ImageURL != "" {
+		url, err := s.storage.GetFileUrl(*d.ImageURL)
 		if err == nil {
-			d.ImageURL = url
+			d.ImageURL = &url
 		}
 	}
 	return d, nil
@@ -67,10 +67,10 @@ func (s *service) GetDiseaseByID(ctx context.Context, id uuid.UUID) (*Disease, e
 		return nil, err
 	}
 	// Sign URL
-	if d.ImageURL != "" {
-		url, err := s.storage.GetFileUrl(d.ImageURL)
+	if d.ImageURL != nil && *d.ImageURL != "" {
+		url, err := s.storage.GetFileUrl(*d.ImageURL)
 		if err == nil {
-			d.ImageURL = url
+			d.ImageURL = &url
 		}
 	}
 	return d, nil
@@ -87,7 +87,7 @@ func (s *service) UpdateDisease(ctx context.Context, id uuid.UUID, d *Disease) e
 	}
 	d.ID = existing.ID
 
-	if len(d.ImageURL) > 4 && d.ImageURL[:4] == "http" {
+	if d.ImageURL != nil && len(*d.ImageURL) > 4 && (*d.ImageURL)[:4] == "http" {
 		d.ImageURL = existing.ImageURL
 	}
 
