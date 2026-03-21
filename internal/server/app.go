@@ -34,7 +34,8 @@ func SetupApp(
 
 	// Initialize Modules
 	authRepo := auth.NewRepository()
-	authService := auth.NewService(authRepo, cfg.JWTSecret, storageService, emailService)
+	googleClientIDs := []string{cfg.GoogleClientIDWeb, cfg.GoogleClientIDIOS, cfg.GoogleClientIDAndroid}
+	authService := auth.NewService(authRepo, cfg.JWTSecret, storageService, emailService, googleClientIDs, cfg.LINEChannelID)
 	auth.NewHandler(authService)
 
 	diseaseRepo := disease.NewRepository()

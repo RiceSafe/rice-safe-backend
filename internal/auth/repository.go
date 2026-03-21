@@ -22,6 +22,10 @@ type Repository interface {
 	GetUserByResetToken(ctx context.Context, token string) (*User, error)
 	ClearResetToken(ctx context.Context, id uuid.UUID) error
 
+	// OAuth
+	GetUserByProviderID(ctx context.Context, provider, providerUID string) (*User, error)
+	CreateUserIdentity(ctx context.Context, userID uuid.UUID, provider, providerUID string) error
+
 	// Admin Actions
 	ListUsers(ctx context.Context, role string) ([]*UserListItem, error)
 	UpdateUserRole(ctx context.Context, userID uuid.UUID, role string) error
@@ -50,8 +54,8 @@ func (r *repository) CreateUser(ctx context.Context, user *User) error {
 
 	err := database.DB.QueryRow(ctx, query,
 		user.Username,
-		user.Email,
-		user.PasswordHash,
+		user.Email,         // *string — nil for OAuth users with no email
+		user.PasswordHash,  // *string — nil for OAuth users
 		user.Role,
 		user.AvatarURL,
 		user.CreatedAt,
@@ -175,6 +179,28 @@ func (r *repository) UpdateUserRole(ctx context.Context, userID uuid.UUID, role 
 		return errors.New("user not found")
 	}
 	return nil
+}
+
+// GetUserByProviderID finds a user via their OAuth identity
+func (r *repository) GetUserByProviderID(ctx context.Context, provider, providerUID string) (*User, error) {
+	query := `
+		SELECT u.id, u.username, u.email, u.password_hash, u.role, u.avatar_url, u.created_at, u.updated_at
+		FROM users u
+		JOIN user_identities ui ON ui.user_id = u.id
+		WHERE ui.provider = $1 AND ui.provider_uid = $2
+	`
+	row := database.DB.QueryRow(ctx, query, provider, providerUID)
+	return scanUser(row)
+}
+
+// CreateUserIdentity links an OAuth identity to a user
+func (r *repository) CreateUserIdentity(ctx context.Context, userID uuid.UUID, provider, providerUID string) error {
+	query := `
+		INSERT INTO user_identities (user_id, provider, provider_uid)
+		VALUES ($1, $2, $3)
+	`
+	_, err := database.DB.Exec(ctx, query, userID, provider, providerUID)
+	return err
 }
 
 func scanUser(row pgx.Row) (*User, error) {

@@ -1,7 +1,11 @@
 DROP TABLE IF EXISTS notifications;
-DROP TABLE IF EXISTS community_comments;
-DROP TABLE IF EXISTS community_posts;
+DROP TABLE IF EXISTS likes;
+DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS outbreaks;
-DROP TABLE IF EXISTS diagnoses;
+DROP TABLE IF EXISTS diagnosis_history;
+DROP TABLE IF EXISTS diseases;
 DROP TABLE IF EXISTS notification_settings;
+DROP TABLE IF EXISTS user_identities;
 DROP TABLE IF EXISTS users;
+DROP EXTENSION IF EXISTS "uuid-ossp";

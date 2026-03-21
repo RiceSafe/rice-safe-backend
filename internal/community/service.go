@@ -28,14 +28,14 @@ func NewService(repo Repository, storage storage.Service) Service {
 }
 
 func (s *service) CreatePost(ctx context.Context, userID uuid.UUID, content string, imageHeader *multipart.FileHeader) (*Post, error) {
-	var imageURL string
+	var imageURL *string
 	if imageHeader != nil {
 		// Upload to GCS
 		url, err := s.storage.UploadFile(imageHeader, "community")
 		if err != nil {
 			return nil, err
 		}
-		imageURL = url
+		imageURL = &url
 	}
 
 	post := &Post{
@@ -49,10 +49,10 @@ func (s *service) CreatePost(ctx context.Context, userID uuid.UUID, content stri
 	}
 
 	// Calculate current signed URL if exists
-	if post.ImageURL != "" {
-		signed, err := s.storage.GetFileUrl(post.ImageURL)
+	if post.ImageURL != nil && *post.ImageURL != "" {
+		signed, err := s.storage.GetFileUrl(*post.ImageURL)
 		if err == nil {
-			post.ImageURL = signed
+			post.ImageURL = &signed
 		}
 	}
 
@@ -67,14 +67,14 @@ func (s *service) GetPosts(ctx context.Context, userID uuid.UUID, limit, offset 
 
 	// Sign URLs for posts and authors
 	for _, p := range posts {
-		if p.ImageURL != "" {
-			if signed, err := s.storage.GetFileUrl(p.ImageURL); err == nil {
-				p.ImageURL = signed
+		if p.ImageURL != nil && *p.ImageURL != "" {
+			if signed, err := s.storage.GetFileUrl(*p.ImageURL); err == nil {
+				p.ImageURL = &signed
 			}
 		}
-		if p.AuthorAvatar != "" {
-			if signed, err := s.storage.GetFileUrl(p.AuthorAvatar); err == nil {
-				p.AuthorAvatar = signed
+		if p.AuthorAvatar != nil && *p.AuthorAvatar != "" {
+			if signed, err := s.storage.GetFileUrl(*p.AuthorAvatar); err == nil {
+				p.AuthorAvatar = &signed
 			}
 		}
 	}
@@ -87,14 +87,14 @@ func (s *service) GetPostByID(ctx context.Context, postID, userID uuid.UUID) (*P
 		return nil, err
 	}
 
-	if p.ImageURL != "" {
-		if signed, err := s.storage.GetFileUrl(p.ImageURL); err == nil {
-			p.ImageURL = signed
+	if p.ImageURL != nil && *p.ImageURL != "" {
+		if signed, err := s.storage.GetFileUrl(*p.ImageURL); err == nil {
+			p.ImageURL = &signed
 		}
 	}
-	if p.AuthorAvatar != "" {
-		if signed, err := s.storage.GetFileUrl(p.AuthorAvatar); err == nil {
-			p.AuthorAvatar = signed
+	if p.AuthorAvatar != nil && *p.AuthorAvatar != "" {
+		if signed, err := s.storage.GetFileUrl(*p.AuthorAvatar); err == nil {
+			p.AuthorAvatar = &signed
 		}
 	}
 	return p, nil
@@ -108,9 +108,9 @@ func (s *service) GetComments(ctx context.Context, postID uuid.UUID) ([]*Comment
 
 	// Sign avatar URLs
 	for _, c := range comments {
-		if c.AuthorAvatar != "" {
-			if signed, err := s.storage.GetFileUrl(c.AuthorAvatar); err == nil {
-				c.AuthorAvatar = signed
+		if c.AuthorAvatar != nil && *c.AuthorAvatar != "" {
+			if signed, err := s.storage.GetFileUrl(*c.AuthorAvatar); err == nil {
+				c.AuthorAvatar = &signed
 			}
 		}
 	}

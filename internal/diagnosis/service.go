@@ -82,10 +82,10 @@ func (s *service) Diagnose(ctx context.Context, userID uuid.UUID, req *Diagnosis
 	}
 
 	// Sign Image URL if disease found
-	if diseaseResult != nil && diseaseResult.ImageURL != "" {
-		signedURL, _ := s.storage.GetFileUrl(diseaseResult.ImageURL)
+	if diseaseResult != nil && diseaseResult.ImageURL != nil && *diseaseResult.ImageURL != "" {
+		signedURL, _ := s.storage.GetFileUrl(*diseaseResult.ImageURL)
 		if signedURL != "" {
-			diseaseResult.ImageURL = signedURL
+			diseaseResult.ImageURL = &signedURL
 		}
 	}
 

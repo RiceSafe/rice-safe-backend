@@ -82,6 +82,19 @@ definitions:
     - email
     - password
     type: object
+  internal_auth.OAuthRequest:
+    properties:
+      id_token:
+        type: string
+      provider:
+        enum:
+        - google
+        - line
+        type: string
+    required:
+    - id_token
+    - provider
+    type: object
   internal_auth.RegisterRequest:
     properties:
       email:
@@ -93,6 +106,7 @@ definitions:
         enum:
         - FARMER
         - EXPERT
+        - ADMIN
         type: string
       username:
         maxLength: 32
@@ -132,6 +146,7 @@ definitions:
       created_at:
         type: string
       email:
+        description: 'Nullable: OAuth users may not have email'
         type: string
       id:
         type: string
@@ -526,6 +541,41 @@ paths:
       security:
       - BearerAuth: []
       summary: Update user profile
+      tags:
+      - Auth
+  /auth/oauth:
+    post:
+      consumes:
+      - application/json
+      description: Verifies social id_token and returns JWT. Creates user if they
+        don't exist.
+      parameters:
+      - description: OAuth payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_auth.OAuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_auth.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login with Google or LINE
       tags:
       - Auth
   /auth/register:

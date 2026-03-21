@@ -232,6 +232,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/oauth": {
+            "post": {
+                "description": "Verifies social id_token and returns JWT. Creates user if they don't exist.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login with Google or LINE",
+                "parameters": [
+                    {
+                        "description": "OAuth payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.OAuthRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/auth/register": {
             "post": {
                 "description": "Register with username, email, password, and optional role",
@@ -1774,6 +1826,25 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_auth.OAuthRequest": {
+            "type": "object",
+            "required": [
+                "id_token",
+                "provider"
+            ],
+            "properties": {
+                "id_token": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string",
+                    "enum": [
+                        "google",
+                        "line"
+                    ]
+                }
+            }
+        },
         "internal_auth.RegisterRequest": {
             "type": "object",
             "required": [
@@ -1793,7 +1864,8 @@ const docTemplate = `{
                     "type": "string",
                     "enum": [
                         "FARMER",
-                        "EXPERT"
+                        "EXPERT",
+                        "ADMIN"
                     ]
                 },
                 "username": {
@@ -1845,6 +1917,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "email": {
+                    "description": "Nullable: OAuth users may not have email",
                     "type": "string"
                 },
                 "id": {

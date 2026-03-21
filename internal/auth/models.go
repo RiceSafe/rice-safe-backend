@@ -10,10 +10,10 @@ import (
 type User struct {
 	ID           uuid.UUID `json:"id"`
 	Username     string    `json:"username"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"` // Never send password hash in JSON
+	Email        *string   `json:"email"`     // Nullable: OAuth users may not have email
+	PasswordHash *string   `json:"-"`         // Nullable: OAuth users have no password
 	Role         string    `json:"role"`
-	AvatarURL    string    `json:"avatar_url"`
+	AvatarURL    *string   `json:"avatar_url"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -23,7 +23,7 @@ type RegisterRequest struct {
 	Username string `json:"username" validate:"required,min=3,max=32"`
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=6"`
-	Role     string `json:"role" validate:"oneof=FARMER EXPERT"`
+	Role     string `json:"role" validate:"oneof=FARMER EXPERT ADMIN"`
 }
 
 // LoginRequest is the payload for login
@@ -59,10 +59,16 @@ type AuthResponse struct {
 type UserListItem struct {
 	ID        uuid.UUID `json:"id"`
 	Username  string    `json:"username"`
-	Email     string    `json:"email"`
+	Email     *string   `json:"email"`
 	Role      string    `json:"role"`
-	AvatarURL string    `json:"avatar_url"`
+	AvatarURL *string   `json:"avatar_url"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+// OAuthRequest is the payload for social login
+type OAuthRequest struct {
+	Provider string `json:"provider" validate:"required,oneof=google line"`
+	IDToken  string `json:"id_token" validate:"required"`
 }
 
 // UpdateRoleRequest is the payload for changing a user's role

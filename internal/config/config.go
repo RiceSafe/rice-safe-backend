@@ -18,6 +18,10 @@ type Config struct {
 	WeatherAPIURL      string
 	ResendAPIKey       string
 	ResendFromEmail    string
+	GoogleClientIDWeb     string
+	GoogleClientIDIOS     string
+	GoogleClientIDAndroid string
+	LINEChannelID         string
 }
 
 func LoadConfig() (*Config, error) {
@@ -34,8 +38,12 @@ func LoadConfig() (*Config, error) {
 		AIServiceURL:       getEnv("AI_SERVICE_URL", "http://localhost:8000"),
 		OpenWeatherMapKey:  getEnv("OPEN_WEATHER_MAP_KEY", ""),
 		WeatherAPIURL:      getEnv("WEATHER_API_URL", "https://api.openweathermap.org/data/2.5/weather"),
-		ResendAPIKey:       getEnv("RESEND_API_KEY", ""),
-		ResendFromEmail:    getEnv("RESEND_FROM_EMAIL", "noreply@ricesafe.app"),
+		ResendAPIKey:          getEnv("RESEND_API_KEY", ""),
+		ResendFromEmail:       getEnv("RESEND_FROM_EMAIL", "noreply@ricesafe.app"),
+		GoogleClientIDWeb:     getEnv("GOOGLE_CLIENT_ID_WEB", ""),
+		GoogleClientIDIOS:     getEnv("GOOGLE_CLIENT_ID_IOS", ""),
+		GoogleClientIDAndroid: getEnv("GOOGLE_CLIENT_ID_ANDROID", ""),
+		LINEChannelID:         getEnv("LINE_CHANNEL_ID", ""),
 	}
 
 	// Validate required variables

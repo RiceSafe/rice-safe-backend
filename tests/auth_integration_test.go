@@ -67,7 +67,8 @@ func TestAuthIntegration(t *testing.T) {
 
 		assert.NotEmpty(t, resBody.Token)
 		assert.Equal(t, "testfarmer", resBody.User.Username)
-		assert.Equal(t, "farmer@test.com", resBody.User.Email)
+		require.NotNil(t, resBody.User.Email)
+		assert.Equal(t, "farmer@test.com", *resBody.User.Email)
 		assert.Equal(t, "FARMER", resBody.User.Role)
 
 		registeredToken = resBody.Token

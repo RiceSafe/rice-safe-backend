@@ -54,9 +54,9 @@ type Disease struct {
 	Alias         string       `json:"alias"`
 	Name          string       `json:"name"`
 	Category      string       `json:"category"`
-	ImageURL      string       `json:"image_url"`
+	ImageURL      *string      `json:"image_url"`
 	Description   string       `json:"description"`
-	SpreadDetails string       `json:"spread_details"`
+	SpreadDetails *string      `json:"spread_details"`
 	MatchWeather  StringArray  `json:"match_weather"`
 	Symptoms      InfoSections `json:"symptoms"`
 	Prevention    InfoSections `json:"prevention"`
