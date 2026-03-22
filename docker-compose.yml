@@ -40,7 +40,7 @@ services:
       - DB_SOURCE=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
       - PORT=${PORT}
       - JWT_SECRET=${JWT_SECRET}
-      - AI_SERVICE_URL=http://ai-service:8000
+      - AI_SERVICE_URL=${AI_SERVICE_URL}
     volumes:
       - ./:/app
     depends_on:
