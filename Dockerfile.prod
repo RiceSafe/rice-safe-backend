@@ -30,6 +30,7 @@ COPY --from=builder /app/migrations ./migrations
 
 # Add non-root user
 RUN adduser -D appuser
+RUN chown -R appuser:appuser /app
 USER appuser
 
 # Expose port
