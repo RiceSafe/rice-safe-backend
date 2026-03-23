@@ -28,5 +28,6 @@ dev:
 
 swagger:
 	swag init -g cmd/api/main.go --parseDependency --parseInternal
+	@echo "Swagger docs generated successfully!"
 
 .PHONY: docker-up docker-down migrate-up migrate-down create-migration test dev swagger
