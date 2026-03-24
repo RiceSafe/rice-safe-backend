@@ -1,5 +1,7 @@
 # RiceSafe Backend API
 
+![CI](https://github.com/RiceSafe/rice-safe-backend/actions/workflows/test.yml/badge.svg)
+
 RiceSafe Backend is a robust Go-based server-side application powering the RiceSafe ecosystem. It handles user authentication, disease diagnosis, outbreak tracking, community engagement, and real-time data management.
 
 ## Features
