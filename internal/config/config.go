@@ -22,6 +22,7 @@ type Config struct {
 	GoogleClientIDIOS     string
 	GoogleClientIDAndroid string
 	LINEChannelID         string
+	RailwayPublicDomain   string
 }
 
 func LoadConfig() (*Config, error) {
@@ -44,6 +45,7 @@ func LoadConfig() (*Config, error) {
 		GoogleClientIDIOS:     getEnv("GOOGLE_CLIENT_ID_IOS", ""),
 		GoogleClientIDAndroid: getEnv("GOOGLE_CLIENT_ID_ANDROID", ""),
 		LINEChannelID:         getEnv("LINE_CHANNEL_ID", ""),
+		RailwayPublicDomain:   getEnv("RAILWAY_PUBLIC_DOMAIN", "localhost:8080"),
 	}
 
 	// Validate required variables

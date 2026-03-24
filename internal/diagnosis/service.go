@@ -64,20 +64,20 @@ func (s *service) Diagnose(ctx context.Context, userID uuid.UUID, req *Diagnosis
 
 	switch prediction.Prediction {
 	case "not_rice":
-		infoMessage = "Images detected are not rice leaves. Please take a new photo."
+		infoMessage = "ไม่พบใบข้าวในรูปภาพ กรุณาถ่ายรูปใหม่อีกครั้ง"
 	case "not_clear":
-		infoMessage = "The image is not clear or confidence is low. Please take a photo again."
-	case "normal":
-		infoMessage = "Your rice plant is healthy."
+		infoMessage = "รูปภาพไม่ชัดเจน กรุณาถ่ายรูปใหม่อีกครั้ง"
+	case "other_diseases":
+		infoMessage = "ปกติ/โรคอื่นๆ"
 	default:
 		d, err := s.diseaseRepo.GetByAlias(ctx, prediction.Prediction)
 		if err == nil {
 			diseaseResult = d
 			diseaseID = &d.ID
-			infoMessage = "Disease detected: " + d.Name
+			infoMessage = "ตรวจพบโรค: " + d.Name
 		} else {
 			fmt.Printf("Disease alias not found: %s\n", prediction.Prediction)
-			infoMessage = "Unknown disease detected."
+			infoMessage = "ตรวจพบโรคที่ไม่รู้จัก"
 		}
 	}
 
@@ -108,7 +108,7 @@ func (s *service) Diagnose(ctx context.Context, userID uuid.UUID, req *Diagnosis
 	signedUserImage, _ := s.storage.GetFileUrl(imageURL)
 
 	// Auto-Outbreak Logic
-	isDisease := prediction.Prediction != "not_rice" && prediction.Prediction != "not_clear" && prediction.Prediction != "normal"
+	isDisease := prediction.Prediction != "not_rice" && prediction.Prediction != "not_clear" && prediction.Prediction != "other_diseases"
 
 	if isDisease && diseaseID != nil && req.Latitude != nil && req.Longitude != nil {
 		ob := &outbreak.Outbreak{

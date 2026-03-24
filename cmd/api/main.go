@@ -10,13 +10,12 @@ import (
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/email"
 	"github.com/RiceSafe/rice-safe-backend/internal/platform/storage"
 	"github.com/RiceSafe/rice-safe-backend/internal/server"
-	_ "github.com/RiceSafe/rice-safe-backend/docs"
+	"github.com/RiceSafe/rice-safe-backend/docs"
 )
 
 // @title RiceSafe API
 // @version 1.0
 // @description Backend API for RiceSafe Application
-// @host localhost:8080
 // @BasePath /api
 // @securityDefinitions.apikey BearerAuth
 // @in header
@@ -27,6 +26,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+
+	// Set Swagger Host
+	docs.SwaggerInfo.Host = cfg.RailwayPublicDomain
 
 	// Connect Database
 	database.ConnectDB(cfg.DBSource)

@@ -101,4 +101,73 @@ func TestCommunityIntegration(t *testing.T) {
 		assert.Equal(t, 0, posts[0].LikeCount)
 		assert.Equal(t, 0, posts[0].CommentCount)
 	})
+
+	var postID string
+	t.Run("Get first post ID from feed", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/community/posts", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		resp, _ := app.Test(req)
+		var posts []community.PostResponse
+		json.NewDecoder(resp.Body).Decode(&posts)
+		require.NotEmpty(t, posts)
+		postID = posts[0].ID.String()
+	})
+
+	t.Run("Toggle Like on a post", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/api/community/posts/"+postID+"/like", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		resp, err := app.Test(req, int(2*time.Second.Milliseconds()))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var res map[string]bool
+		json.NewDecoder(resp.Body).Decode(&res)
+		assert.True(t, res["liked"], "Post should be liked")
+
+		// Verify like count in feed
+		reqFeed := httptest.NewRequest(http.MethodGet, "/api/community/posts", nil)
+		reqFeed.Header.Set("Authorization", "Bearer "+token)
+		respFeed, _ := app.Test(reqFeed)
+		var posts []community.PostResponse
+		json.NewDecoder(respFeed.Body).Decode(&posts)
+		assert.Equal(t, 1, posts[0].LikeCount)
+	})
+
+	t.Run("Add a comment to the post", func(t *testing.T) {
+		body, _ := json.Marshal(community.CreateCommentRequest{
+			Content: "Great post!",
+		})
+		req := httptest.NewRequest(http.MethodPost, "/api/community/posts/"+postID+"/comments", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		resp, err := app.Test(req, int(2*time.Second.Milliseconds()))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+		var comment community.Comment
+		json.NewDecoder(resp.Body).Decode(&comment)
+		assert.Equal(t, "Great post!", comment.Content)
+	})
+
+	t.Run("Get post details with comments", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/community/posts/"+postID, nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		resp, err := app.Test(req, int(2*time.Second.Milliseconds()))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var res struct {
+			Post     community.PostResponse `json:"post"`
+			Comments []community.Comment    `json:"comments"`
+		}
+		json.NewDecoder(resp.Body).Decode(&res)
+
+		assert.Equal(t, postID, res.Post.ID.String())
+		assert.Equal(t, 1, res.Post.LikeCount)
+		assert.Len(t, res.Comments, 1)
+		assert.Equal(t, "Great post!", res.Comments[0].Content)
+	})
 }

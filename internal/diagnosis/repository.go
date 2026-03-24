@@ -34,8 +34,8 @@ func (r *repository) GetHistory(ctx context.Context, userID uuid.UUID) ([]*Histo
 	query := `
 		SELECT 
 			dh.id, dh.image_url, dh.confidence, dh.created_at,
-			COALESCE(dh.prediction, d.alias, 'normal') as prediction,
-			COALESCE(d.name, 'Healthy') as disease_name
+			COALESCE(dh.prediction, d.alias, 'other_diseases') as prediction,
+			COALESCE(d.name, 'ปกติ/โรคอื่นๆ') as disease_name
 		FROM diagnosis_history dh
 		LEFT JOIN diseases d ON dh.disease_id = d.id
 		WHERE dh.user_id = $1
