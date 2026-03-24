@@ -5,7 +5,7 @@ RiceSafe Backend is a robust Go-based server-side application powering the RiceS
 ## Features
 
 - **Multi-Platform Authentication:** Secure registration and login via JWT. Supports Email/Password, Google OAuth (Web, iOS, Android), and LINE Login.
-- **AI-Powered Diagnosis:** Seamless integration with our AI Service to analyze rice leaf images and symptoms for accurate disease detection.
+- **AI-Powered Diagnosis:** Seamless integration with our AI Service to analyze rice images and symptoms for accurate disease detection.
 - **Real-Time Weather:** Integrated with OpenWeatherMap API to provide hyper-local weather data on the user dashboard.
 - **Outbreak Monitoring:** Dynamic tracking of disease outbreaks with proximity-based alerts and interactive maps.
 - **Intelligent Notifications:** System-wide notification engine for critical alerts and community updates.
@@ -14,7 +14,7 @@ RiceSafe Backend is a robust Go-based server-side application powering the RiceS
 - **Automated Communication:** Transactional email delivery (e.g., password resets) powered by the Resend API.
 - **API Documentation:** Interactive Swagger UI for developers to explore and test endpoints.
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Language:** Go (Golang) 1.26+
 - **Web Framework:** Fiber v2
@@ -40,20 +40,25 @@ rice-safe-backend/
 ├── cmd/
 │   └── api/                # Application entry point (main.go)
 ├── internal/               # Core business logic
-│   ├── auth/               # IAM, JWT, OAuth (Google/LINE)
-│   ├── community/          # Social features (Posts, Comments)
-│   ├── config/             # Environment configuration
-│   ├── dashboard/          # Weather & Stats integration
-│   ├── diagnosis/          # AI Diagnosis & History
+│   ├── auth/               # IAM, JWT, OAuth (Google/LINE), and User Management
+│   ├── community/          # Social features (Posts, Comments, Likes)
+│   ├── config/             # Environment configuration (Fiber/Env)
+│   ├── dashboard/          # Weather & Statistics integration
+│   ├── diagnosis/          # AI Diagnosis & History tracking
 │   ├── disease/            # Disease Knowledge Base
 │   ├── notification/       # Alerting & Message system
-│   ├── outbreak/           # Geospatial tracking
-│   ├── platform/           # Shared adapters (Database, Storage, Email)
-│   └── server/             # App lifecycle & Dependency Injection
-├── migrations/             # SQL version control
-├── docs/                   # Auto-generated Swagger documentation
+│   ├── outbreak/           # Geospatial disease tracking
+│   ├── platform/           # Infrastructure Adapters (Database, Storage, Email, AI Client)
+│   ├── server/             # Fiber app initialization & Dependency Injection
+│   └── testutil/           # Test helpers, Database setup, and Mocks
 ├── pkg/                    # Shared utility packages
-└── Dockerfile.prod         # Optimized production build
+├── migrations/             # SQL migration files (PostgreSQL)
+├── tests/                  # API Integration & End-to-End Test Suite
+├── docs/                   # Auto-generated Swagger/OpenAPI documentation
+├── Makefile                # Automation scripts (database, swagger, dev environment)
+├── docker-compose.yml      # Infrastructure orchestration (DB)
+├── Dockerfile              # Local development container config
+└── Dockerfile.prod         # Multi-stage production build config
 ```
 
 ### Dependency Injection
