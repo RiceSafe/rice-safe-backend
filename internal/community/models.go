@@ -41,6 +41,7 @@ type PostResponse struct {
 	UserID       uuid.UUID `json:"user_id"`
 	AuthorName   string    `json:"author_name"`
 	AuthorAvatar *string   `json:"author_avatar"`
+	AuthorRole   string    `json:"author_role"`
 	Content      string    `json:"content"`
 	ImageURL     *string   `json:"image_url"`
 	LikeCount    int       `json:"like_count"`
@@ -57,6 +58,7 @@ type CommentResponse struct {
 	UserID       uuid.UUID `json:"user_id"`
 	AuthorName   string    `json:"author_name"`
 	AuthorAvatar *string   `json:"author_avatar"`
+	AuthorRole   string    `json:"author_role"`
 	Content      string    `json:"content"`
 	CreatedAt    time.Time `json:"created_at"`
 }
