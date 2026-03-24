@@ -2023,6 +2023,9 @@ const docTemplate = `{
                 "author_name": {
                     "type": "string"
                 },
+                "author_role": {
+                    "type": "string"
+                },
                 "comment_count": {
                     "type": "integer"
                 },
