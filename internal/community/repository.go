@@ -41,6 +41,7 @@ func (r *repository) GetPosts(ctx context.Context, userID uuid.UUID, limit, offs
 			p.id, p.user_id, 
 			u.username as author_name,
 			u.avatar_url,
+			u.role,
 			p.content, p.image_url, p.created_at, p.updated_at,
 			(SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) as like_count,
 			(SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count,
@@ -60,7 +61,7 @@ func (r *repository) GetPosts(ctx context.Context, userID uuid.UUID, limit, offs
 	for rows.Next() {
 		var p PostResponse
 		if err := rows.Scan(
-			&p.ID, &p.UserID, &p.AuthorName, &p.AuthorAvatar,
+			&p.ID, &p.UserID, &p.AuthorName, &p.AuthorAvatar, &p.AuthorRole,
 			&p.Content, &p.ImageURL, &p.CreatedAt, &p.UpdatedAt,
 			&p.LikeCount, &p.CommentCount, &p.IsLiked,
 		); err != nil {
@@ -77,6 +78,7 @@ func (r *repository) GetPostByID(ctx context.Context, postID, userID uuid.UUID) 
 			p.id, p.user_id, 
 			u.username as author_name,
 			u.avatar_url,
+			u.role,
 			p.content, p.image_url, p.created_at, p.updated_at,
 			(SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) as like_count,
 			(SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count,
@@ -87,7 +89,7 @@ func (r *repository) GetPostByID(ctx context.Context, postID, userID uuid.UUID) 
 	`
 	var p PostResponse
 	err := database.DB.QueryRow(ctx, query, postID, userID).Scan(
-		&p.ID, &p.UserID, &p.AuthorName, &p.AuthorAvatar,
+		&p.ID, &p.UserID, &p.AuthorName, &p.AuthorAvatar, &p.AuthorRole,
 		&p.Content, &p.ImageURL, &p.CreatedAt, &p.UpdatedAt,
 		&p.LikeCount, &p.CommentCount, &p.IsLiked,
 	)
@@ -103,6 +105,7 @@ func (r *repository) GetComments(ctx context.Context, postID uuid.UUID) ([]*Comm
 			c.id, c.post_id, c.user_id,
 			u.username as author_name,
 			u.avatar_url,
+			u.role,
 			c.content, c.created_at
 		FROM comments c
 		JOIN users u ON c.user_id = u.id
@@ -119,7 +122,7 @@ func (r *repository) GetComments(ctx context.Context, postID uuid.UUID) ([]*Comm
 	for rows.Next() {
 		var c CommentResponse
 		if err := rows.Scan(
-			&c.ID, &c.PostID, &c.UserID, &c.AuthorName, &c.AuthorAvatar,
+			&c.ID, &c.PostID, &c.UserID, &c.AuthorName, &c.AuthorAvatar, &c.AuthorRole,
 			&c.Content, &c.CreatedAt,
 		); err != nil {
 			return nil, err
